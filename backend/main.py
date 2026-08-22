@@ -49,3 +49,8 @@ def create_transaction(
     db.refresh(new_transaction)
 
     return new_transaction
+@app.get("/transactions")
+def get_transactions(db: Session = Depends(get_db)):
+    transactions = db.query(Transaction).all()
+
+    return transactions
