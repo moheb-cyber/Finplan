@@ -73,6 +73,21 @@ def create_budget(
     budget_data: BudgetCreate,
     db: Session = Depends(get_db)
 ):
+    existing_budget = (
+        db.query(Budget)
+        .filter(
+            Budget.category == budget_data.category,
+            Budget.month == budget_data.month
+        )
+        .first()
+    )
+
+    if existing_budget is not None:
+        raise HTTPException(
+            status_code=400,
+            detail="Budget already exists for this category and month"
+        )
+
     budget = Budget(
         category=budget_data.category,
         amount=budget_data.amount,
