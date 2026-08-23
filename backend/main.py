@@ -113,6 +113,7 @@ def get_budgets(
         query = query.filter(Budget.month == month)
 
     return query.all()
+
 @app.get("/budgets/summary")
 def get_budget_summary(
     month: str,
@@ -147,6 +148,15 @@ def get_budget_summary(
 
         remaining = budget.amount - spent
 
+        if budget.amount > 0:
+            spent_percentage = (spent / budget.amount) * 100
+            remaining_percentage = (
+                remaining / budget.amount
+            ) * 100
+        else:
+            spent_percentage = 0
+            remaining_percentage = 0
+
         if remaining > 0:
             status = "on_track"
         elif remaining == 0:
@@ -154,15 +164,14 @@ def get_budget_summary(
         else:
             status = "over_budget"
 
-        spent_percentage = (spent / budget.amount) * 100
-
         result.append({
             "category": budget.category,
             "budget": budget.amount,
             "spent": spent,
             "remaining": remaining,
             "status": status,
-            "spent_percentage": spent_percentage
+            "spent_percentage": spent_percentage,
+            "remaining_percentage": remaining_percentage
         })
 
     return result
