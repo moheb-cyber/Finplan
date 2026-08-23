@@ -95,3 +95,30 @@ def delete_transaction(
     return {
         "message": "Transaction deleted successfully"
     }
+@app.put("/transactions/{transaction_id}")
+def update_transaction(
+    transaction_id: int,
+    transaction_data: TransactionCreate,
+    db: Session = Depends(get_db)
+):
+    transaction = (
+        db.query(Transaction)
+        .filter(Transaction.id == transaction_id)
+        .first()
+    )
+
+    if transaction is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Transaction not found"
+        )
+
+    transaction.title = transaction_data.title
+    transaction.amount = transaction_data.amount
+    transaction.type = transaction_data.type
+    transaction.category = transaction_data.category
+
+    db.commit()
+    db.refresh(transaction)
+
+    return transaction
