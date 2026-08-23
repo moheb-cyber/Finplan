@@ -11,7 +11,23 @@ app = FastAPI(
     title="FinPlan API",
     description="Personal financial planning API",
 )
-Base.metadata.create_all(bind=engine)
+def get_month_range(month: str):
+    start_date = datetime.strptime(
+        month + "-01",
+        "%Y-%m-%d"
+    )
+
+    if start_date.month == 12:
+        end_date = start_date.replace(
+            year=start_date.year + 1,
+            month=1
+        )
+    else:
+        end_date = start_date.replace(
+            month=start_date.month + 1
+        )
+
+    return start_date, end_date
 
 
 def get_db():
@@ -68,6 +84,61 @@ def create_budget(
     db.refresh(budget)
 
     return budget
+
+
+@app.get("/budgets")
+def get_budgets(
+    month: str | None = None,
+    db: Session = Depends(get_db)
+):
+    query = db.query(Budget)
+
+    if month is not None:
+        query = query.filter(Budget.month == month)
+
+    return query.all()
+@app.get("/budgets/summary")
+def get_budget_summary(
+    month: str,
+    db: Session = Depends(get_db)
+):
+    start_date, end_date = get_month_range(month)
+
+    budgets = (
+        db.query(Budget)
+        .filter(Budget.month == month)
+        .all()
+    )
+
+    result = []
+
+    for budget in budgets:
+        expenses = (
+            db.query(Transaction)
+            .filter(
+                Transaction.type == "expense",
+                Transaction.category == budget.category,
+                Transaction.created_at >= start_date,
+                Transaction.created_at < end_date
+            )
+            .all()
+        )
+
+        spent = sum(
+            transaction.amount
+            for transaction in expenses
+        )
+
+        remaining = budget.amount - spent
+
+        result.append({
+            "category": budget.category,
+            "budget": budget.amount,
+            "spent": spent,
+            "remaining": remaining
+        })
+
+    return result
 
 
 # =========================
