@@ -1,10 +1,11 @@
 from pydantic import BaseModel, Field
+from typing import Literal
 
 
 class TransactionCreate(BaseModel):
     title: str = Field(min_length=1)
     amount: float = Field(gt=0)
-    type: str
+    type: Literal["income", "expense"]
     category: str = Field(min_length=1)
 
 
