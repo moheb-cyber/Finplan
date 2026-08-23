@@ -21,3 +21,13 @@ class Transaction(Base):
         DateTime,
         default=datetime.utcnow
     )
+class Budget(Base):
+    __tablename__ = "budgets"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    category = Column(String, nullable=False)
+
+    amount = Column(Float, nullable=False)
+
+    month = Column(String, nullable=False)

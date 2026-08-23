@@ -2,8 +2,8 @@ from fastapi import FastAPI, Depends, HTTPException
 from backend.database import Base, engine
 from sqlalchemy.orm import Session
 from backend.database import SessionLocal
-from backend.models import Transaction
-from backend.schemas import TransactionCreate
+from backend.models import Transaction, Budget
+from backend.schemas import TransactionCreate, BudgetCreate
 from datetime import datetime
 Base.metadata.create_all(bind=engine)
 
@@ -11,6 +11,7 @@ app = FastAPI(
     title="FinPlan API",
     description="Personal financial planning API",
 )
+Base.metadata.create_all(bind=engine)
 
 
 def get_db():
@@ -50,6 +51,23 @@ def create_transaction(
     db.refresh(transaction)
 
     return transaction
+
+@app.post("/budgets")
+def create_budget(
+    budget_data: BudgetCreate,
+    db: Session = Depends(get_db)
+):
+    budget = Budget(
+        category=budget_data.category,
+        amount=budget_data.amount,
+        month=budget_data.month
+    )
+
+    db.add(budget)
+    db.commit()
+    db.refresh(budget)
+
+    return budget
 
 
 # =========================

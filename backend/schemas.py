@@ -6,3 +6,9 @@ class TransactionCreate(BaseModel):
     amount: float
     type: str
     category: str
+
+
+class BudgetCreate(BaseModel):
+    category: str
+    amount: float
+    month: str
