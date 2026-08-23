@@ -291,6 +291,38 @@ def get_dashboard(
         "budget_remaining": budget_remaining
     }
 
+@app.get("/dashboard/expenses")
+def get_dashboard_expenses(
+    month: str,
+    db: Session = Depends(get_db)
+):
+    start_date, end_date = get_month_range(month)
+
+    expenses = (
+        db.query(Transaction)
+        .filter(
+            Transaction.type == "expense",
+            Transaction.created_at >= start_date,
+            Transaction.created_at < end_date
+        )
+        .all()
+    )
+
+    expenses_by_category = {}
+
+    for transaction in expenses:
+        category = transaction.category
+
+        if category not in expenses_by_category:
+            expenses_by_category[category] = 0
+
+        expenses_by_category[category] += transaction.amount
+
+    return {
+        "month": month,
+        "expenses_by_category": expenses_by_category
+    }
+
 # =========================
 # READ ALL + FILTER
 # =========================
