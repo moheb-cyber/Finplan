@@ -1,18 +1,14 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from backend.database import Base, engine, SessionLocal
+from backend.database import SessionLocal
 from backend.models import Transaction
 from backend.schemas import TransactionCreate
-
-
-Base.metadata.create_all(bind=engine)
 
 
 app = FastAPI(
     title="FinPlan API",
     description="Personal financial planning API",
-    version="1.0.0"
 )
 
 
@@ -28,27 +24,37 @@ def get_db():
 @app.get("/")
 def root():
     return {
-        "message": "FinPlan API is running 🚀"
+        "message": "FinPlan API is running"
     }
 
 
+# =========================
+# CREATE
+# =========================
+
 @app.post("/transactions")
 def create_transaction(
-    transaction: TransactionCreate,
+    transaction_data: TransactionCreate,
     db: Session = Depends(get_db)
 ):
-    new_transaction = Transaction(
-        title=transaction.title,
-        amount=transaction.amount,
-        type=transaction.type,
-        category=transaction.category
+    transaction = Transaction(
+        title=transaction_data.title,
+        amount=transaction_data.amount,
+        type=transaction_data.type,
+        category=transaction_data.category
     )
 
-    db.add(new_transaction)
+    db.add(transaction)
     db.commit()
-    db.refresh(new_transaction)
+    db.refresh(transaction)
 
-    return new_transaction
+    return transaction
+
+
+# =========================
+# READ ALL + FILTER
+# =========================
+
 @app.get("/transactions")
 def get_transactions(
     type: str | None = None,
@@ -64,6 +70,43 @@ def get_transactions(
         query = query.filter(Transaction.category == category)
 
     return query.all()
+
+
+# =========================
+# SUMMARY
+# =========================
+
+@app.get("/transactions/summary")
+def get_transaction_summary(
+    db: Session = Depends(get_db)
+):
+    transactions = db.query(Transaction).all()
+
+    total_income = sum(
+        transaction.amount
+        for transaction in transactions
+        if transaction.type == "income"
+    )
+
+    total_expense = sum(
+        transaction.amount
+        for transaction in transactions
+        if transaction.type == "expense"
+    )
+
+    balance = total_income - total_expense
+
+    return {
+        "total_income": total_income,
+        "total_expense": total_expense,
+        "balance": balance
+    }
+
+
+# =========================
+# READ ONE
+# =========================
+
 @app.get("/transactions/{transaction_id}")
 def get_transaction(
     transaction_id: int,
@@ -82,29 +125,12 @@ def get_transaction(
         )
 
     return transaction
-@app.delete("/transactions/{transaction_id}")
-def delete_transaction(
-    transaction_id: int,
-    db: Session = Depends(get_db)
-):
-    transaction = (
-        db.query(Transaction)
-        .filter(Transaction.id == transaction_id)
-        .first()
-    )
 
-    if transaction is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Transaction not found"
-        )
 
-    db.delete(transaction)
-    db.commit()
+# =========================
+# UPDATE
+# =========================
 
-    return {
-        "message": "Transaction deleted successfully"
-    }
 @app.put("/transactions/{transaction_id}")
 def update_transaction(
     transaction_id: int,
@@ -132,3 +158,32 @@ def update_transaction(
     db.refresh(transaction)
 
     return transaction
+
+
+# =========================
+# DELETE
+# =========================
+
+@app.delete("/transactions/{transaction_id}")
+def delete_transaction(
+    transaction_id: int,
+    db: Session = Depends(get_db)
+):
+    transaction = (
+        db.query(Transaction)
+        .filter(Transaction.id == transaction_id)
+        .first()
+    )
+
+    if transaction is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Transaction not found"
+        )
+
+    db.delete(transaction)
+    db.commit()
+
+    return {
+        "message": "Transaction deleted successfully"
+    }
