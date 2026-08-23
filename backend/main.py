@@ -138,12 +138,15 @@ def get_budget_summary(
         else:
             status = "over_budget"
 
+        spent_percentage = (spent / budget.amount) * 100
+
         result.append({
             "category": budget.category,
             "budget": budget.amount,
             "spent": spent,
             "remaining": remaining,
-            "status": status
+            "status": status,
+            "spent_percentage": spent_percentage
         })
 
     return result
