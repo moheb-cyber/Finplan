@@ -210,6 +210,29 @@ def update_budget(
 
     return budget
 
+@app.delete("/budgets/{budget_id}")
+def delete_budget(
+    budget_id: int,
+    db: Session = Depends(get_db)
+):
+    budget = (
+        db.query(Budget)
+        .filter(Budget.id == budget_id)
+        .first()
+    )
+
+    if budget is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Budget not found"
+        )
+
+    db.delete(budget)
+    db.commit()
+
+    return {
+        "message": "Budget deleted successfully"
+    }
 
 # =========================
 # READ ALL + FILTER
