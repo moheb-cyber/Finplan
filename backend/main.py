@@ -109,12 +109,31 @@ def get_transactions(
 # =========================
 # SUMMARY
 # =========================
-
 @app.get("/transactions/summary")
 def get_transaction_summary(
+    from_date: str | None = None,
+    to_date: str | None = None,
     db: Session = Depends(get_db)
 ):
-    transactions = db.query(Transaction).all()
+    query = db.query(Transaction)
+
+    if from_date is not None:
+        start_date = datetime.strptime(from_date, "%Y-%m-%d")
+        query = query.filter(
+            Transaction.created_at >= start_date
+        )
+
+    if to_date is not None:
+        end_date = datetime.strptime(to_date, "%Y-%m-%d").replace(
+            hour=23,
+            minute=59,
+            second=59
+        )
+        query = query.filter(
+            Transaction.created_at <= end_date
+        )
+
+    transactions = query.all()
 
     total_income = sum(
         transaction.amount
@@ -133,9 +152,9 @@ def get_transaction_summary(
     return {
         "total_income": total_income,
         "total_expense": total_expense,
-        "balance": balance
+        "balance": balance,
+        "transaction_count": len(transactions)
     }
-
 
 # =========================
 # READ ONE
