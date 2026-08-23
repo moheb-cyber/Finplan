@@ -12,3 +12,8 @@ class BudgetCreate(BaseModel):
     category: str
     amount: float
     month: str
+
+class BudgetUpdate(BaseModel):
+    category: str
+    amount: float
+    month: str

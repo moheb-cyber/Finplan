@@ -5,6 +5,7 @@ from backend.database import SessionLocal
 from backend.models import Transaction, Budget
 from backend.schemas import TransactionCreate, BudgetCreate
 from datetime import datetime
+from backend.schemas import TransactionCreate, BudgetCreate, BudgetUpdate
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -165,6 +166,49 @@ def get_budget_summary(
         })
 
     return result
+
+@app.put("/budgets/{budget_id}")
+def update_budget(
+    budget_id: int,
+    budget_data: BudgetUpdate,
+    db: Session = Depends(get_db)
+):
+    budget = (
+        db.query(Budget)
+        .filter(Budget.id == budget_id)
+        .first()
+    )
+
+    if budget is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Budget not found"
+        )
+
+    existing_budget = (
+        db.query(Budget)
+        .filter(
+            Budget.category == budget_data.category,
+            Budget.month == budget_data.month,
+            Budget.id != budget_id
+        )
+        .first()
+    )
+
+    if existing_budget is not None:
+        raise HTTPException(
+            status_code=400,
+            detail="Budget already exists for this category and month"
+        )
+
+    budget.category = budget_data.category
+    budget.amount = budget_data.amount
+    budget.month = budget_data.month
+
+    db.commit()
+    db.refresh(budget)
+
+    return budget
 
 
 # =========================
