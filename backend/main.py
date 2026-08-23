@@ -318,9 +318,25 @@ def get_dashboard_expenses(
 
         expenses_by_category[category] += transaction.amount
 
+    total_expense = sum(expenses_by_category.values())
+
+    expenses_with_percentage = {}
+
+    for category, amount in expenses_by_category.items():
+        if total_expense > 0:
+            percentage = (amount / total_expense) * 100
+        else:
+            percentage = 0
+
+        expenses_with_percentage[category] = {
+            "amount": amount,
+            "percentage": percentage
+        }
+
     return {
         "month": month,
-        "expenses_by_category": expenses_by_category
+        "total_expense": total_expense,
+        "expenses_by_category": expenses_with_percentage
     }
 
 # =========================
