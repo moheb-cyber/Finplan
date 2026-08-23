@@ -159,6 +159,45 @@ def get_transaction_summary(
 # =========================
 # READ ONE
 # =========================
+@app.get("/transactions/expenses-by-category")
+def get_expenses_by_category(
+    from_date: str | None = None,
+    to_date: str | None = None,
+    db: Session = Depends(get_db)
+):
+    query = db.query(Transaction).filter(
+        Transaction.type == "expense"
+    )
+
+    if from_date is not None:
+        start_date = datetime.strptime(from_date, "%Y-%m-%d")
+        query = query.filter(
+            Transaction.created_at >= start_date
+        )
+
+    if to_date is not None:
+        end_date = datetime.strptime(to_date, "%Y-%m-%d").replace(
+            hour=23,
+            minute=59,
+            second=59
+        )
+        query = query.filter(
+            Transaction.created_at <= end_date
+        )
+
+    transactions = query.all()
+
+    expenses_by_category = {}
+
+    for transaction in transactions:
+        category = transaction.category
+
+        if category not in expenses_by_category:
+            expenses_by_category[category] = 0
+
+        expenses_by_category[category] += transaction.amount
+
+    return expenses_by_category
 
 @app.get("/transactions/{transaction_id}")
 def get_transaction(
