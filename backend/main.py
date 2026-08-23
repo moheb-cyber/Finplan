@@ -234,6 +234,63 @@ def delete_budget(
         "message": "Budget deleted successfully"
     }
 
+@app.get("/dashboard")
+def get_dashboard(
+    month: str,
+    db: Session = Depends(get_db)
+):
+    start_date, end_date = get_month_range(month)
+
+    # Transactions
+    transactions = (
+        db.query(Transaction)
+        .filter(
+            Transaction.created_at >= start_date,
+            Transaction.created_at < end_date
+        )
+        .all()
+    )
+
+    total_income = sum(
+        transaction.amount
+        for transaction in transactions
+        if transaction.type == "income"
+    )
+
+    total_expense = sum(
+        transaction.amount
+        for transaction in transactions
+        if transaction.type == "expense"
+    )
+
+    balance = total_income - total_expense
+
+    # Budgets
+    budgets = (
+        db.query(Budget)
+        .filter(Budget.month == month)
+        .all()
+    )
+
+    total_budget = sum(
+        budget.amount
+        for budget in budgets
+    )
+
+    budget_spent = total_expense
+
+    budget_remaining = total_budget - budget_spent
+
+    return {
+        "month": month,
+        "income": total_income,
+        "expense": total_expense,
+        "balance": balance,
+        "total_budget": total_budget,
+        "budget_spent": budget_spent,
+        "budget_remaining": budget_remaining
+    }
+
 # =========================
 # READ ALL + FILTER
 # =========================
