@@ -50,10 +50,20 @@ def create_transaction(
 
     return new_transaction
 @app.get("/transactions")
-def get_transactions(db: Session = Depends(get_db)):
-    transactions = db.query(Transaction).all()
+def get_transactions(
+    type: str | None = None,
+    category: str | None = None,
+    db: Session = Depends(get_db)
+):
+    query = db.query(Transaction)
 
-    return transactions
+    if type is not None:
+        query = query.filter(Transaction.type == type)
+
+    if category is not None:
+        query = query.filter(Transaction.category == category)
+
+    return query.all()
 @app.get("/transactions/{transaction_id}")
 def get_transaction(
     transaction_id: int,
