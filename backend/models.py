@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, Float, DateTime
 from sqlalchemy.sql import func
 
 from backend.database import Base
-
+from datetime import datetime
 
 class Transaction(Base):
     __tablename__ = "transactions"
@@ -16,6 +16,7 @@ class Transaction(Base):
     type = Column(String, nullable=False)
 
     category = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
     created_at = Column(
         DateTime(timezone=True),

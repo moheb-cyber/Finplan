@@ -1,10 +1,11 @@
 from fastapi import FastAPI, Depends, HTTPException
+from backend.database import Base, engine
 from sqlalchemy.orm import Session
-
 from backend.database import SessionLocal
 from backend.models import Transaction
 from backend.schemas import TransactionCreate
-
+from datetime import datetime
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="FinPlan API",
@@ -59,6 +60,9 @@ def create_transaction(
 def get_transactions(
     type: str | None = None,
     category: str | None = None,
+    date: str | None = None,
+    from_date: str | None = None,
+    to_date: str | None = None,
     db: Session = Depends(get_db)
 ):
     query = db.query(Transaction)
@@ -68,6 +72,36 @@ def get_transactions(
 
     if category is not None:
         query = query.filter(Transaction.category == category)
+
+    if date is not None:
+        start_date = datetime.strptime(date, "%Y-%m-%d")
+        end_date = datetime.strptime(date, "%Y-%m-%d").replace(
+            hour=23,
+            minute=59,
+            second=59
+        )
+
+        query = query.filter(
+            Transaction.created_at >= start_date,
+            Transaction.created_at <= end_date
+        )
+
+    if from_date is not None:
+        start_date = datetime.strptime(from_date, "%Y-%m-%d")
+        query = query.filter(
+            Transaction.created_at >= start_date
+        )
+
+    if to_date is not None:
+        end_date = datetime.strptime(to_date, "%Y-%m-%d").replace(
+            hour=23,
+            minute=59,
+            second=59
+        )
+
+        query = query.filter(
+            Transaction.created_at <= end_date
+        )
 
     return query.all()
 
