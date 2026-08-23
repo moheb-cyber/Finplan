@@ -131,11 +131,19 @@ def get_budget_summary(
 
         remaining = budget.amount - spent
 
+        if remaining > 0:
+            status = "on_track"
+        elif remaining == 0:
+            status = "reached"
+        else:
+            status = "over_budget"
+
         result.append({
             "category": budget.category,
             "budget": budget.amount,
             "spent": spent,
-            "remaining": remaining
+            "remaining": remaining,
+            "status": status
         })
 
     return result
