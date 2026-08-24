@@ -347,52 +347,79 @@ def get_dashboard(
         "budget_status": budget_status
     }
 
-@app.get("/dashboard/expenses")
-def get_dashboard_expenses(
+@app.get("/dashboard/budgets")
+def get_dashboard_budgets(
     month: str,
     db: Session = Depends(get_db)
 ):
     start_date, end_date = get_month_range(month)
 
-    expenses = (
-        db.query(Transaction)
-        .filter(
-            Transaction.type == "expense",
-            Transaction.created_at >= start_date,
-            Transaction.created_at < end_date
-        )
+    # =========================
+    # GET BUDGETS
+    # =========================
+
+    budgets = (
+        db.query(Budget)
+        .filter(Budget.month == month)
         .all()
     )
 
-    expenses_by_category = {}
+    result = []
 
-    for transaction in expenses:
-        category = transaction.category
+    # =========================
+    # CALCULATE EACH BUDGET
+    # =========================
 
-        if category not in expenses_by_category:
-            expenses_by_category[category] = 0
+    for budget in budgets:
 
-        expenses_by_category[category] += transaction.amount
+        expenses = (
+            db.query(Transaction)
+            .filter(
+                Transaction.type == "expense",
+                Transaction.category == budget.category,
+                Transaction.created_at >= start_date,
+                Transaction.created_at < end_date
+            )
+            .all()
+        )
 
-    total_expense = sum(expenses_by_category.values())
+        spent = sum(
+            transaction.amount
+            for transaction in expenses
+        )
 
-    expenses_with_percentage = {}
+        remaining = budget.amount - spent
 
-    for category, amount in expenses_by_category.items():
-        if total_expense > 0:
-            percentage = (amount / total_expense) * 100
+        if budget.amount > 0:
+            spent_percentage = (
+                spent / budget.amount
+            ) * 100
         else:
-            percentage = 0
+            spent_percentage = 0
 
-        expenses_with_percentage[category] = {
-            "amount": amount,
-            "percentage": percentage
-        }
+        if remaining > 0:
+            status = "on_track"
+        elif remaining == 0:
+            status = "reached"
+        else:
+            status = "over_budget"
+
+        result.append({
+            "category": budget.category,
+            "budget": budget.amount,
+            "spent": spent,
+            "remaining": remaining,
+            "spent_percentage": spent_percentage,
+            "status": status
+        })
+
+    # =========================
+    # RESPONSE
+    # =========================
 
     return {
         "month": month,
-        "total_expense": total_expense,
-        "expenses_by_category": expenses_with_percentage
+        "budgets": result
     }
 
 # =========================
