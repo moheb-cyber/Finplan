@@ -4,9 +4,13 @@ from typing import Literal
 from pydantic import BaseModel, Field, field_validator
 
 
+# =========================
+# TRANSACTION
+# =========================
+
 class TransactionCreate(BaseModel):
     title: str = Field(min_length=1)
-    amount: float = Field(gt=0)
+    amount: int = Field(gt=0)
     type: Literal["income", "expense"]
     category: str = Field(min_length=1)
 
@@ -21,9 +25,13 @@ class TransactionCreate(BaseModel):
         return value
 
 
+# =========================
+# BUDGET CREATE
+# =========================
+
 class BudgetCreate(BaseModel):
     category: str = Field(min_length=1)
-    amount: float = Field(gt=0)
+    amount: int = Field(gt=0)
     month: str
 
     @field_validator("category")
@@ -47,9 +55,13 @@ class BudgetCreate(BaseModel):
         return value
 
 
+# =========================
+# BUDGET UPDATE
+# =========================
+
 class BudgetUpdate(BaseModel):
     category: str = Field(min_length=1)
-    amount: float = Field(gt=0)
+    amount: int = Field(gt=0)
     month: str
 
     @field_validator("category")

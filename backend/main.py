@@ -3,7 +3,6 @@ from backend.database import Base, engine
 from sqlalchemy.orm import Session
 from backend.database import SessionLocal
 from backend.models import Transaction, Budget
-from backend.schemas import TransactionCreate, BudgetCreate
 from datetime import datetime
 from backend.schemas import TransactionCreate, BudgetCreate, BudgetUpdate
 Base.metadata.create_all(bind=engine)
