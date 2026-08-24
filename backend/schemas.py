@@ -104,3 +104,16 @@ class BudgetUpdate(BaseModel):
     @classmethod
     def validate_month(cls, value):
         return validate_month_format(value)
+
+# =========================
+# BUDGET RESPONSE
+# =========================
+
+class BudgetResponse(BaseModel):
+    id: int
+    category: str
+    amount: int
+    month: str
+
+    class Config:
+        from_attributes = True    

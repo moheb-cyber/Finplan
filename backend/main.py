@@ -8,6 +8,7 @@ from backend.schemas import (
     TransactionCreate,
     TransactionResponse,
     BudgetCreate,
+    BudgetResponse,
     BudgetUpdate,
     validate_month_format
 )
@@ -80,7 +81,10 @@ def create_transaction(
 
     return transaction
 
-@app.post("/budgets")
+@app.post(
+    "/budgets",
+    response_model=BudgetResponse
+)
 def create_budget(
     budget_data: BudgetCreate,
     db: Session = Depends(get_db)
@@ -113,7 +117,10 @@ def create_budget(
     return budget
 
 
-@app.get("/budgets")
+@app.get(
+    "/budgets",
+    response_model=list[BudgetResponse]
+)
 def get_budgets(
     month: str | None = None,
     db: Session = Depends(get_db)
@@ -193,7 +200,10 @@ def get_budget_summary(
 
     return result
 
-@app.put("/budgets/{budget_id}")
+@app.put(
+    "/budgets/{budget_id}",
+    response_model=BudgetResponse
+)
 def update_budget(
     budget_id: int,
     budget_data: BudgetUpdate,
