@@ -129,6 +129,7 @@ def get_budget_summary(
     result = []
 
     for budget in budgets:
+
         expenses = (
             db.query(Transaction)
             .filter(
@@ -148,10 +149,15 @@ def get_budget_summary(
         remaining = budget.amount - spent
 
         if budget.amount > 0:
-            spent_percentage = (spent / budget.amount) * 100
-            remaining_percentage = (
-                remaining / budget.amount
-            ) * 100
+            spent_percentage = round(
+                (spent / budget.amount) * 100,
+                2
+            )
+
+            remaining_percentage = round(
+                (remaining / budget.amount) * 100,
+                2
+            )
         else:
             spent_percentage = 0
             remaining_percentage = 0
@@ -249,10 +255,6 @@ def get_dashboard(
 ):
     start_date, end_date = get_month_range(month)
 
-    # =========================
-    # TRANSACTIONS
-    # =========================
-
     transactions = (
         db.query(Transaction)
         .filter(
@@ -275,10 +277,6 @@ def get_dashboard(
     )
 
     balance = total_income - total_expense
-
-    # =========================
-    # BUDGETS
-    # =========================
 
     budgets = (
         db.query(Budget)
@@ -307,20 +305,13 @@ def get_dashboard(
 
     budget_remaining = total_budget - budget_spent
 
-    # =========================
-    # BUDGET PERCENTAGE
-    # =========================
-
     if total_budget > 0:
-        budget_spent_percentage = (
-            budget_spent / total_budget
-        ) * 100
+        budget_spent_percentage = round(
+            (budget_spent / total_budget) * 100,
+            2
+        )
     else:
         budget_spent_percentage = 0
-
-    # =========================
-    # BUDGET STATUS
-    # =========================
 
     if total_budget == 0:
         budget_status = "no_budget"
@@ -330,10 +321,6 @@ def get_dashboard(
         budget_status = "reached"
     else:
         budget_status = "over_budget"
-
-    # =========================
-    # RESPONSE
-    # =========================
 
     return {
         "month": month,
@@ -354,10 +341,6 @@ def get_dashboard_budgets(
 ):
     start_date, end_date = get_month_range(month)
 
-    # =========================
-    # GET BUDGETS
-    # =========================
-
     budgets = (
         db.query(Budget)
         .filter(Budget.month == month)
@@ -365,10 +348,6 @@ def get_dashboard_budgets(
     )
 
     result = []
-
-    # =========================
-    # CALCULATE EACH BUDGET
-    # =========================
 
     for budget in budgets:
 
@@ -391,9 +370,10 @@ def get_dashboard_budgets(
         remaining = budget.amount - spent
 
         if budget.amount > 0:
-            spent_percentage = (
-                spent / budget.amount
-            ) * 100
+            spent_percentage = round(
+                (spent / budget.amount) * 100,
+                2
+            )
         else:
             spent_percentage = 0
 
@@ -412,10 +392,6 @@ def get_dashboard_budgets(
             "spent_percentage": spent_percentage,
             "status": status
         })
-
-    # =========================
-    # RESPONSE
-    # =========================
 
     return {
         "month": month,
