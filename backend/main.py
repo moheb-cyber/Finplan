@@ -291,13 +291,13 @@ def get_dashboard(
         for budget in budgets
     )
 
-    # Categories that have a budget
+    # Get categories that have a budget
     budget_categories = {
         budget.category
         for budget in budgets
     }
 
-    # Only expenses belonging to budgeted categories
+    # Calculate spending only for budgeted categories
     budget_spent = sum(
         transaction.amount
         for transaction in transactions
@@ -308,6 +308,32 @@ def get_dashboard(
     )
 
     budget_remaining = total_budget - budget_spent
+
+    # =========================
+    # BUDGET PERCENTAGE
+    # =========================
+
+    if total_budget > 0:
+        budget_spent_percentage = (
+            budget_spent / total_budget
+        ) * 100
+    else:
+        budget_spent_percentage = 0
+
+    # =========================
+    # RESPONSE
+    # =========================
+
+    return {
+        "month": month,
+        "income": total_income,
+        "expense": total_expense,
+        "balance": balance,
+        "total_budget": total_budget,
+        "budget_spent": budget_spent,
+        "budget_remaining": budget_remaining,
+        "budget_spent_percentage": budget_spent_percentage
+    }
 
     # =========================
     # RESPONSE
