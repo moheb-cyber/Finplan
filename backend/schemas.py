@@ -116,4 +116,24 @@ class BudgetResponse(BaseModel):
     month: str
 
     class Config:
-        from_attributes = True    
+        from_attributes = True
+
+# =========================
+# DASHBOARD RESPONSE
+# =========================
+
+class DashboardResponse(BaseModel):
+    month: str
+    income: int
+    expense: int
+    balance: int
+    total_budget: int
+    budget_spent: int
+    budget_remaining: int
+    budget_spent_percentage: float
+    budget_status: Literal[
+        "no_budget",
+        "on_track",
+        "reached",
+        "over_budget"
+    ]           

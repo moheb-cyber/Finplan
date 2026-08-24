@@ -10,6 +10,7 @@ from backend.schemas import (
     BudgetCreate,
     BudgetResponse,
     BudgetUpdate,
+    DashboardResponse,
     validate_month_format
 )
 Base.metadata.create_all(bind=engine)
@@ -270,7 +271,10 @@ def delete_budget(
         "message": "Budget deleted successfully"
     }
 
-@app.get("/dashboard")
+@app.get(
+    "/dashboard",
+    response_model=DashboardResponse
+)
 def get_dashboard(
    month: str = Depends(validate_month_query), 
     db: Session = Depends(get_db)
