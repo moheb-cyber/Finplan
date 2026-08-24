@@ -291,13 +291,11 @@ def get_dashboard(
         for budget in budgets
     )
 
-    # Get categories that have a budget
     budget_categories = {
         budget.category
         for budget in budgets
     }
 
-    # Calculate spending only for budgeted categories
     budget_spent = sum(
         transaction.amount
         for transaction in transactions
@@ -321,6 +319,19 @@ def get_dashboard(
         budget_spent_percentage = 0
 
     # =========================
+    # BUDGET STATUS
+    # =========================
+
+    if total_budget == 0:
+        budget_status = "no_budget"
+    elif budget_remaining > 0:
+        budget_status = "on_track"
+    elif budget_remaining == 0:
+        budget_status = "reached"
+    else:
+        budget_status = "over_budget"
+
+    # =========================
     # RESPONSE
     # =========================
 
@@ -332,21 +343,8 @@ def get_dashboard(
         "total_budget": total_budget,
         "budget_spent": budget_spent,
         "budget_remaining": budget_remaining,
-        "budget_spent_percentage": budget_spent_percentage
-    }
-
-    # =========================
-    # RESPONSE
-    # =========================
-
-    return {
-        "month": month,
-        "income": total_income,
-        "expense": total_expense,
-        "balance": balance,
-        "total_budget": total_budget,
-        "budget_spent": budget_spent,
-        "budget_remaining": budget_remaining
+        "budget_spent_percentage": budget_spent_percentage,
+        "budget_status": budget_status
     }
 
 @app.get("/dashboard/expenses")
