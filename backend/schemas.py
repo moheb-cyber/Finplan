@@ -20,7 +20,7 @@ def validate_month_format(value: str) -> str:
 
 
 # =========================
-# TRANSACTION
+# TRANSACTION CREATE
 # =========================
 
 class TransactionCreate(BaseModel):
@@ -38,6 +38,22 @@ class TransactionCreate(BaseModel):
             raise ValueError("value cannot be empty")
 
         return value
+
+
+# =========================
+# TRANSACTION RESPONSE
+# =========================
+
+class TransactionResponse(BaseModel):
+    id: int
+    title: str
+    amount: int
+    type: Literal["income", "expense"]
+    category: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
 
 
 # =========================

@@ -6,6 +6,7 @@ from backend.models import Transaction, Budget
 from datetime import datetime
 from backend.schemas import (
     TransactionCreate,
+    TransactionResponse,
     BudgetCreate,
     BudgetUpdate,
     validate_month_format
@@ -58,7 +59,10 @@ def root():
 # CREATE
 # =========================
 
-@app.post("/transactions")
+@app.post(
+    "/transactions",
+    response_model=TransactionResponse
+)
 def create_transaction(
     transaction_data: TransactionCreate,
     db: Session = Depends(get_db)
@@ -410,7 +414,10 @@ def get_dashboard_budgets(
 # READ ALL + FILTER
 # =========================
 
-@app.get("/transactions")
+@app.get(
+    "/transactions",
+    response_model=list[TransactionResponse]
+)
 def get_transactions(
     type: str | None = None,
     category: str | None = None,
@@ -553,7 +560,10 @@ def get_expenses_by_category(
 
     return expenses_by_category
 
-@app.get("/transactions/{transaction_id}")
+@app.get(
+    "/transactions/{transaction_id}",
+    response_model=TransactionResponse
+)
 def get_transaction(
     transaction_id: int,
     db: Session = Depends(get_db)
