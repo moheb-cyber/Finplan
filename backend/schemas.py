@@ -10,11 +10,31 @@ class TransactionCreate(BaseModel):
     type: Literal["income", "expense"]
     category: str = Field(min_length=1)
 
+    @field_validator("title", "category")
+    @classmethod
+    def validate_text(cls, value):
+        value = value.strip()
+
+        if not value:
+            raise ValueError("value cannot be empty")
+
+        return value
+
 
 class BudgetCreate(BaseModel):
     category: str = Field(min_length=1)
     amount: float = Field(gt=0)
     month: str
+
+    @field_validator("category")
+    @classmethod
+    def validate_category(cls, value):
+        value = value.strip()
+
+        if not value:
+            raise ValueError("category cannot be empty")
+
+        return value
 
     @field_validator("month")
     @classmethod
@@ -31,6 +51,16 @@ class BudgetUpdate(BaseModel):
     category: str = Field(min_length=1)
     amount: float = Field(gt=0)
     month: str
+
+    @field_validator("category")
+    @classmethod
+    def validate_category(cls, value):
+        value = value.strip()
+
+        if not value:
+            raise ValueError("category cannot be empty")
+
+        return value
 
     @field_validator("month")
     @classmethod
