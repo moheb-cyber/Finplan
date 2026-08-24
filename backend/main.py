@@ -4,7 +4,12 @@ from sqlalchemy.orm import Session
 from backend.database import SessionLocal
 from backend.models import Transaction, Budget
 from datetime import datetime
-from backend.schemas import TransactionCreate, BudgetCreate, BudgetUpdate
+from backend.schemas import (
+    TransactionCreate,
+    BudgetCreate,
+    BudgetUpdate,
+    validate_month_format
+)
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -28,6 +33,9 @@ def get_month_range(month: str):
         )
 
     return start_date, end_date
+
+def validate_month_query(month: str) -> str:
+    return validate_month_format(month)
 
 
 def get_db():
@@ -115,7 +123,7 @@ def get_budgets(
 
 @app.get("/budgets/summary")
 def get_budget_summary(
-    month: str,
+    month: str = Depends(validate_month_query),
     db: Session = Depends(get_db)
 ):
     start_date, end_date = get_month_range(month)
@@ -250,7 +258,7 @@ def delete_budget(
 
 @app.get("/dashboard")
 def get_dashboard(
-    month: str,
+   month: str = Depends(validate_month_query), 
     db: Session = Depends(get_db)
 ):
     start_date, end_date = get_month_range(month)
@@ -336,7 +344,7 @@ def get_dashboard(
 
 @app.get("/dashboard/budgets")
 def get_dashboard_budgets(
-    month: str,
+    month: str = Depends(validate_month_query),
     db: Session = Depends(get_db)
 ):
     start_date, end_date = get_month_range(month)
