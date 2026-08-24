@@ -1,5 +1,7 @@
-from pydantic import BaseModel, Field
+from datetime import datetime
 from typing import Literal
+
+from pydantic import BaseModel, Field, field_validator
 
 
 class TransactionCreate(BaseModel):
@@ -14,8 +16,28 @@ class BudgetCreate(BaseModel):
     amount: float = Field(gt=0)
     month: str
 
+    @field_validator("month")
+    @classmethod
+    def validate_month(cls, value):
+        try:
+            datetime.strptime(value, "%Y-%m")
+        except ValueError:
+            raise ValueError("month must be in YYYY-MM format")
+
+        return value
+
 
 class BudgetUpdate(BaseModel):
     category: str = Field(min_length=1)
     amount: float = Field(gt=0)
     month: str
+
+    @field_validator("month")
+    @classmethod
+    def validate_month(cls, value):
+        try:
+            datetime.strptime(value, "%Y-%m")
+        except ValueError:
+            raise ValueError("month must be in YYYY-MM format")
+
+        return value
