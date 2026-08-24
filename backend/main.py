@@ -249,7 +249,10 @@ def get_dashboard(
 ):
     start_date, end_date = get_month_range(month)
 
-    # Transactions
+    # =========================
+    # TRANSACTIONS
+    # =========================
+
     transactions = (
         db.query(Transaction)
         .filter(
@@ -273,7 +276,10 @@ def get_dashboard(
 
     balance = total_income - total_expense
 
-    # Budgets
+    # =========================
+    # BUDGETS
+    # =========================
+
     budgets = (
         db.query(Budget)
         .filter(Budget.month == month)
@@ -285,9 +291,27 @@ def get_dashboard(
         for budget in budgets
     )
 
-    budget_spent = total_expense
+    # Categories that have a budget
+    budget_categories = {
+        budget.category
+        for budget in budgets
+    }
+
+    # Only expenses belonging to budgeted categories
+    budget_spent = sum(
+        transaction.amount
+        for transaction in transactions
+        if (
+            transaction.type == "expense"
+            and transaction.category in budget_categories
+        )
+    )
 
     budget_remaining = total_budget - budget_spent
+
+    # =========================
+    # RESPONSE
+    # =========================
 
     return {
         "month": month,
