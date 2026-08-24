@@ -5,6 +5,21 @@ from pydantic import BaseModel, Field, field_validator
 
 
 # =========================
+# MONTH VALIDATION
+# =========================
+
+def validate_month_format(value: str) -> str:
+    value = value.strip()
+
+    try:
+        datetime.strptime(value, "%Y-%m")
+    except ValueError:
+        raise ValueError("month must be in YYYY-MM format")
+
+    return value
+
+
+# =========================
 # TRANSACTION
 # =========================
 
@@ -47,12 +62,7 @@ class BudgetCreate(BaseModel):
     @field_validator("month")
     @classmethod
     def validate_month(cls, value):
-        try:
-            datetime.strptime(value, "%Y-%m")
-        except ValueError:
-            raise ValueError("month must be in YYYY-MM format")
-
-        return value
+        return validate_month_format(value)
 
 
 # =========================
@@ -77,9 +87,4 @@ class BudgetUpdate(BaseModel):
     @field_validator("month")
     @classmethod
     def validate_month(cls, value):
-        try:
-            datetime.strptime(value, "%Y-%m")
-        except ValueError:
-            raise ValueError("month must be in YYYY-MM format")
-
-        return value
+        return validate_month_format(value)
