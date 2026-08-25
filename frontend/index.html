@@ -1,707 +1,128 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
-
 <head>
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>FinPlan</title>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#080808">
+    <title>FinPlan — Personal Finance</title>
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-
-<div class="app">
-
-    <!-- ================= SIDEBAR ================= -->
-
+<div class="app-shell">
     <aside class="sidebar">
-
         <div class="brand">
-
-            <div class="brand-logo">
-                F
+            <div class="brand-mark">F</div>
+            <div class="brand-copy">
+                <strong>FinPlan</strong>
+                <span data-i18n="personalFinance">PERSONAL FINANCE</span>
             </div>
-
-            <div>
-                <h1>FinPlan</h1>
-
-                <span data-i18n="personalFinance">
-                    PERSONAL FINANCE
-                </span>
-            </div>
-
         </div>
 
-
-        <nav class="navigation">
-
-            <a href="#" class="nav-item active">
-                <span>⌂</span>
-
-                <span data-i18n="dashboard">
-                    Dashboard
-                </span>
-            </a>
-
-
-            <a href="#" class="nav-item">
-                <span>↕</span>
-
-                <span data-i18n="transactions">
-                    Transactions
-                </span>
-            </a>
-
-
-            <a href="#" class="nav-item">
-                <span>◫</span>
-
-                <span data-i18n="budgets">
-                    Budgets
-                </span>
-            </a>
-
-
-            <a href="#" class="nav-item">
-                <span>◒</span>
-
-                <span data-i18n="analytics">
-                    Analytics
-                </span>
-            </a>
-
+        <nav class="navigation" aria-label="Primary navigation">
+            <a href="#" class="nav-item active" data-section="dashboard"><span class="nav-icon">⌂</span><span data-i18n="dashboard">Dashboard</span></a>
+            <a href="#" class="nav-item" data-section="transactions"><span class="nav-icon">↕</span><span data-i18n="transactions">Transactions</span></a>
+            <a href="#" class="nav-item" data-section="budgets"><span class="nav-icon">▤</span><span data-i18n="budgets">Budgets</span></a>
+            <a href="#" class="nav-item" data-section="analytics"><span class="nav-icon">◒</span><span data-i18n="analytics">Analytics</span></a>
         </nav>
 
-
         <div class="sidebar-bottom">
-
-            <a href="#" class="nav-item">
-                <span>⚙</span>
-
-                <span data-i18n="settings">
-                    Settings
-                </span>
-            </a>
-
-
+            <a href="#" class="nav-item" data-section="settings"><span class="nav-icon">⚙</span><span data-i18n="settings">Settings</span></a>
             <div class="profile">
-
-                <div class="avatar">
-                    M
-                </div>
-
-                <div class="profile-info">
-
-                    <strong>
-                        Moheb
-                    </strong>
-
-                    <span data-i18n="personalAccount">
-                        Personal account
-                    </span>
-
-                </div>
-
+                <div class="avatar">M</div>
+                <div class="profile-info"><strong>Moheb</strong><span data-i18n="personalAccount">Personal account</span></div>
             </div>
-
         </div>
-
     </aside>
 
-
-    <!-- ================= MAIN ================= -->
-
     <main class="main">
-
-
-        <!-- ================= HEADER ================= -->
-
         <header class="header">
-
-            <div>
-
-                <span
-                    class="eyebrow"
-                    data-i18n="personalFinance"
-                >
-                    PERSONAL FINANCE
-                </span>
-
-                <h2 data-i18n="dashboard">
-                    Dashboard
-                </h2>
-
+            <div class="header-title">
+                <span class="eyebrow" data-i18n="personalFinance">PERSONAL FINANCE</span>
+                <h1 data-i18n="dashboard">Dashboard</h1>
             </div>
-
-
             <div class="header-actions">
-
-
-                <!-- LANGUAGE -->
-
-                <button
-                    class="language-selector"
-                    id="languageSelector"
-                    type="button"
-                >
-
-                    <span class="language-current">
-                        EN
-                    </span>
-
-                    <span>
-                        ⌄
-                    </span>
-
-                </button>
-
-
-                <!-- CURRENCY -->
-
-                <button
-                    class="currency-selector"
-                    id="currencySelector"
-                    type="button"
-                >
-
-                    <span class="currency-current">
-                        USD
-                    </span>
-
-                    <span>
-                        ⌄
-                    </span>
-
-                </button>
-
-
-                <!-- MONTH -->
-
-                <button
-                    class="month-selector"
-                    type="button"
-                >
-
-                    <span>
-                        August 2026
-                    </span>
-
-                    <span>
-                        ⌄
-                    </span>
-
-                </button>
-
-
-                <!-- NOTIFICATION -->
-
-                <button
-                    class="notification"
-                    type="button"
-                >
-                    ♢
-                </button>
-
+                <button class="toolbar-button" id="languageSelector" type="button"><span class="language-current">EN</span><span>⌄</span></button>
+                <button class="toolbar-button" id="currencySelector" type="button"><span class="currency-current">USD</span><span>⌄</span></button>
+                <button class="toolbar-button month-selector" id="monthSelector" type="button"><span id="monthLabel">August 2026</span><span>⌄</span></button>
+                <button class="icon-button" id="notificationButton" type="button" aria-label="Notifications">♢</button>
             </div>
-
         </header>
 
-
-        <!-- ================= WELCOME ================= -->
-
         <section class="welcome">
-
             <div>
-
-                <h3>
-
-                    <span data-i18n="goodEvening">
-                        Good evening
-                    </span>
-
-                    , Moheb 👋
-
-                </h3>
-
-
-                <p data-i18n="moneyMessage">
-                    Here's what's happening with your
-                    money this month.
-                </p>
-
+                <h2><span id="greeting" data-i18n="goodEvening">Good evening</span>, Moheb <span class="wave">👋</span></h2>
+                <p data-i18n="moneyMessage">Here's what's happening with your money this month.</p>
             </div>
-
+            <button class="primary-button" id="addTransactionButton" type="button"><span>＋</span><span data-i18n="addTransaction">Add transaction</span></button>
         </section>
 
-
-        <!-- ================= SUMMARY ================= -->
-
-        <section class="summary-grid">
-
-
-            <!-- INCOME -->
-
+        <section class="summary-grid" aria-label="Financial summary">
             <article class="summary-card">
-
-                <div class="card-top">
-
-                    <span
-                        class="card-label"
-                        data-i18n="totalIncome"
-                    >
-                        Total Income
-                    </span>
-
-
-                    <span class="card-icon income">
-                        ↗
-                    </span>
-
-                </div>
-
-
-                <strong
-                    class="card-value"
-                    data-dashboard="income"
-                >
-                    $0
-                </strong>
-
-
-                <span class="card-meta positive">
-
-                    <span data-i18n="thisMonth">
-                        this month
-                    </span>
-
-                </span>
-
+                <div class="card-top"><span class="card-label" data-i18n="totalIncome">Total Income</span><span class="card-icon income">↗</span></div>
+                <strong class="card-value" data-dashboard="income">$0</strong>
+                <span class="card-meta positive" data-i18n="thisMonth">this month</span>
             </article>
-
-
-            <!-- EXPENSE -->
-
             <article class="summary-card">
-
-                <div class="card-top">
-
-                    <span
-                        class="card-label"
-                        data-i18n="totalExpenses"
-                    >
-                        Total Expenses
-                    </span>
-
-
-                    <span class="card-icon expense">
-                        ↘
-                    </span>
-
-                </div>
-
-
-                <strong
-                    class="card-value"
-                    data-dashboard="expense"
-                >
-                    $0
-                </strong>
-
-
-                <span class="card-meta negative">
-
-                    <span data-i18n="thisMonth">
-                        this month
-                    </span>
-
-                </span>
-
+                <div class="card-top"><span class="card-label" data-i18n="totalExpenses">Total Expenses</span><span class="card-icon expense">↘</span></div>
+                <strong class="card-value" data-dashboard="expense">$0</strong>
+                <span class="card-meta negative" data-i18n="thisMonth">this month</span>
             </article>
-
-
-            <!-- BALANCE -->
-
             <article class="summary-card featured">
-
-                <div class="card-top">
-
-                    <span
-                        class="card-label"
-                        data-i18n="currentBalance"
-                    >
-                        Current Balance
-                    </span>
-
-
-                    <span class="card-icon balance">
-                        $
-                    </span>
-
-                </div>
-
-
-                <strong
-                    class="card-value"
-                    data-dashboard="balance"
-                >
-                    $0
-                </strong>
-
-
-                <span
-                    class="card-meta positive"
-                    data-i18n="healthyBalance"
-                >
-                    Healthy balance
-                </span>
-
+                <div class="card-top"><span class="card-label" data-i18n="currentBalance">Current Balance</span><span class="card-icon balance">$</span></div>
+                <strong class="card-value" data-dashboard="balance">$0</strong>
+                <span class="card-meta positive" data-dashboard="balance-status" data-i18n="healthyBalance">Healthy balance</span>
             </article>
-
-
-            <!-- BUDGET REMAINING -->
-
             <article class="summary-card">
-
-                <div class="card-top">
-
-                    <span
-                        class="card-label"
-                        data-i18n="budgetRemaining"
-                    >
-                        Budget Remaining
-                    </span>
-
-
-                    <span class="card-icon budget">
-                        ◫
-                    </span>
-
-                </div>
-
-
-                <strong
-                    class="card-value"
-                    data-dashboard="budget-remaining"
-                >
-                    $0
-                </strong>
-
-
-                <span class="card-meta">
-
-                    <span
-                        data-dashboard="budget-percentage"
-                    >
-                        0%
-                    </span>
-
-                    <span data-i18n="used">
-                        used
-                    </span>
-
-                </span>
-
+                <div class="card-top"><span class="card-label" data-i18n="budgetRemaining">Budget Remaining</span><span class="card-icon budget">▤</span></div>
+                <strong class="card-value" data-dashboard="budget-remaining">$0</strong>
+                <span class="card-meta"><span data-dashboard="budget-percentage">0%</span> <span data-i18n="used">used</span></span>
             </article>
-
         </section>
-
-
-        <!-- ================= DASHBOARD GRID ================= -->
 
         <section class="dashboard-grid">
-
-
-            <!-- EXPENSE OVERVIEW -->
-
             <article class="panel expense-panel">
-
                 <div class="panel-header">
-
-                    <div>
-
-                        <span
-                            class="panel-label"
-                            data-i18n="expenseOverview"
-                        >
-                            EXPENSE OVERVIEW
-                        </span>
-
-
-                        <h3 data-i18n="spendingThisMonth">
-                            Spending this month
-                        </h3>
-
-                    </div>
-
-
-                    <button
-                        class="panel-button"
-                        type="button"
-                    >
-
-                        <span data-i18n="thisMonth">
-                            This month
-                        </span>
-
-                        ⌄
-
-                    </button>
-
+                    <div><span class="panel-label" data-i18n="expenseOverview">EXPENSE OVERVIEW</span><h3 data-i18n="spendingThisMonth">Spending this month</h3></div>
+                    <span class="panel-caption" id="chartCaption">—</span>
                 </div>
-
-
-                <div class="chart">
-
-                    <div class="chart-y">
-
-                        <span>100%</span>
-                        <span>75%</span>
-                        <span>50%</span>
-                        <span>25%</span>
-                        <span>0</span>
-
-                    </div>
-
-
-                    <div class="chart-area">
-
-                        <div class="grid-line"></div>
-                        <div class="grid-line"></div>
-                        <div class="grid-line"></div>
-                        <div class="grid-line"></div>
-                        <div class="grid-line"></div>
-
-
-                        <div class="bars">
-
-                            <!-- JS fills this -->
-
-                        </div>
-
-                    </div>
-
+                <div class="chart" id="expenseChart">
+                    <div class="chart-y"><span>100%</span><span>75%</span><span>50%</span><span>25%</span><span>0</span></div>
+                    <div class="chart-area"><div class="grid-line"></div><div class="grid-line"></div><div class="grid-line"></div><div class="grid-line"></div><div class="grid-line"></div><div class="bars" id="expenseBars"></div></div>
                 </div>
-
+                <div class="chart-legend" id="chartLegend"></div>
             </article>
-
-
-            <!-- BUDGET -->
 
             <article class="panel budget-panel">
-
                 <div class="panel-header">
-
-                    <div>
-
-                        <span
-                            class="panel-label"
-                            data-i18n="budget"
-                        >
-                            BUDGET
-                        </span>
-
-
-                        <h3 data-i18n="monthlyBudget">
-                            Monthly budget
-                        </h3>
-
-                    </div>
-
-
-                    <button
-                        class="panel-button"
-                        type="button"
-                        data-i18n="viewAll"
-                    >
-                        View all
-                    </button>
-
+                    <div><span class="panel-label" data-i18n="budget">BUDGET</span><h3 data-i18n="monthlyBudget">Monthly budget</h3></div>
+                    <button class="panel-button" id="viewBudgetsButton" type="button" data-i18n="viewAll">View all</button>
                 </div>
-
-
-                <!-- MAIN BUDGET -->
-
                 <div class="budget-total">
-
-                    <div class="budget-number">
-
-                        <strong
-                            data-dashboard="budget-total"
-                        >
-                            $0
-                        </strong>
-
-
-                        <span data-i18n="totalBudget">
-                            total budget
-                        </span>
-
-                    </div>
-
-
-                    <div
-                        class="budget-percentage"
-                        data-dashboard="budget-percentage"
-                    >
-                        0%
-                    </div>
-
+                    <div class="budget-number"><strong data-dashboard="budget-total">$0</strong><span data-i18n="totalBudget">total budget</span></div>
+                    <div class="budget-percentage" data-dashboard="budget-percentage">0%</div>
                 </div>
-
-
-                <div class="progress">
-
-                    <div
-                        class="progress-fill"
-                        data-dashboard="progress"
-                        style="width:0%"
-                    ></div>
-
-                </div>
-
-
+                <div class="progress"><div class="progress-fill" data-dashboard="progress"></div></div>
                 <div class="budget-details">
-
-                    <div>
-
-                        <span data-i18n="spent">
-                            Spent
-                        </span>
-
-
-                        <strong
-                            data-dashboard="budget-spent"
-                        >
-                            $0
-                        </strong>
-
-                    </div>
-
-
-                    <div>
-
-                        <span data-i18n="remaining">
-                            Remaining
-                        </span>
-
-
-                        <strong
-                            data-dashboard="budget-remaining"
-                        >
-                            $0
-                        </strong>
-
-                    </div>
-
+                    <div><span data-i18n="spent">Spent</span><strong data-dashboard="budget-spent">$0</strong></div>
+                    <div><span data-i18n="remaining">Remaining</span><strong data-dashboard="budget-remaining-2">$0</strong></div>
                 </div>
-
-
-                <div class="budget-status">
-
-                    <span class="status-dot"></span>
-
-
-                    <span data-i18n="onTrack">
-                        You're on track with your budget
-                    </span>
-
-                </div>
-
+                <div class="budget-status"><span class="status-dot"></span><span data-dashboard="budget-status" data-i18n="onTrack">You're on track with your budget</span></div>
             </article>
-
         </section>
 
-
-        <!-- ================= BUDGET LIST ================= -->
-
-        <section
-            class="panel budget-list-panel"
-            style="margin-top:13px;"
-        >
-
-            <div class="panel-header">
-
-                <div>
-
-                    <span class="panel-label">
-                        BUDGETS
-                    </span>
-
-                    <h3>
-                        Budget overview
-                    </h3>
-
-                </div>
-
-            </div>
-
-
-            <div class="budget-list">
-
-                <!-- JS fills this -->
-
-            </div>
-
+        <section class="panel budget-list-panel">
+            <div class="panel-header"><div><span class="panel-label" data-i18n="budgetOverviewLabel">BUDGETS</span><h3 data-i18n="budgetOverview">Budget overview</h3></div><span class="panel-caption" id="budgetCount">0 categories</span></div>
+            <div class="budget-list" id="budgetList"><div class="loading-state">Loading…</div></div>
         </section>
-
-
-        <!-- ================= TRANSACTIONS ================= -->
 
         <section class="panel transactions-panel">
-
-
-            <div class="panel-header">
-
-                <div>
-
-                    <span
-                        class="panel-label"
-                        data-i18n="activity"
-                    >
-                        ACTIVITY
-                    </span>
-
-
-                    <h3 data-i18n="recentTransactions">
-                        Recent transactions
-                    </h3>
-
-                </div>
-
-
-                <button
-                    class="panel-button"
-                    type="button"
-                    data-i18n="viewAll"
-                >
-                    View all
-                </button>
-
-            </div>
-
-
-            <div class="transactions-list">
-
-                <!-- JS fills this -->
-
-            </div>
-
+            <div class="panel-header"><div><span class="panel-label" data-i18n="activity">ACTIVITY</span><h3 data-i18n="recentTransactions">Recent transactions</h3></div><button class="panel-button" id="viewTransactionsButton" type="button" data-i18n="viewAll">View all</button></div>
+            <div class="transactions-list" id="transactionsList"><div class="loading-state">Loading…</div></div>
         </section>
 
-
+        <div class="toast" id="toast" role="status"></div>
     </main>
-
 </div>
-
-
 <script src="script.js"></script>
-
 </body>
-
 </html>
