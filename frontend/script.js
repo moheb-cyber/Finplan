@@ -1,230 +1,121 @@
 // =========================
+// FINPLAN
+// =========================
+
+
+// =========================
 // TRANSLATIONS
 // =========================
 
 const translations = {
 
     en: {
-
         personalFinance: "PERSONAL FINANCE",
-
         dashboard: "Dashboard",
-
         transactions: "Transactions",
-
         budgets: "Budgets",
-
         analytics: "Analytics",
-
         settings: "Settings",
-
         personalAccount: "Personal account",
-
         goodEvening: "Good evening",
-
         moneyMessage:
             "Here's what's happening with your money this month.",
-
         totalIncome: "Total Income",
-
         totalExpenses: "Total Expenses",
-
         currentBalance: "Current Balance",
-
         budgetRemaining: "Budget Remaining",
-
         thisMonth: "this month",
-
         healthyBalance: "Healthy balance",
-
         used: "used",
-
         expenseOverview: "EXPENSE OVERVIEW",
-
         spendingThisMonth: "Spending this month",
-
         budget: "BUDGET",
-
         monthlyBudget: "Monthly budget",
-
         totalBudget: "total budget",
-
         spent: "Spent",
-
         remaining: "Remaining",
-
-        onTrack:
-            "You're on track with your budget",
-
+        onTrack: "You're on track with your budget",
         activity: "ACTIVITY",
-
-        recentTransactions:
-            "Recent transactions",
-
+        recentTransactions: "Recent transactions",
         today: "Today",
-
         yesterday: "Yesterday",
-
-        foodRestaurant:
-            "Food & Restaurant",
-
-        monthlySalary:
-            "Monthly Salary",
-
-        transportation:
-            "Transportation",
-
-        viewAll: "View all",
-
-        personal: "Personal",
-
-        language: "Language",
-
-        english: "English",
-
-        persian: "Persian"
+        foodRestaurant: "Food & Restaurant",
+        monthlySalary: "Monthly Salary",
+        transportation: "Transportation",
+        viewAll: "View all"
     },
 
-
     fa: {
-
-        personalFinance:
-            "مدیریت مالی شخصی",
-
-        dashboard:
-            "داشبورد",
-
-        transactions:
-            "تراکنش‌ها",
-
-        budgets:
-            "بودجه‌ها",
-
-        analytics:
-            "تحلیل مالی",
-
-        settings:
-            "تنظیمات",
-
-        personalAccount:
-            "حساب شخصی",
-
-        goodEvening:
-            "عصر بخیر",
-
+        personalFinance: "مدیریت مالی شخصی",
+        dashboard: "داشبورد",
+        transactions: "تراکنش‌ها",
+        budgets: "بودجه‌ها",
+        analytics: "تحلیل مالی",
+        settings: "تنظیمات",
+        personalAccount: "حساب شخصی",
+        goodEvening: "عصر بخیر",
         moneyMessage:
             "وضعیت مالی شما در این ماه به این صورت است.",
-
-        totalIncome:
-            "کل درآمد",
-
-        totalExpenses:
-            "کل هزینه‌ها",
-
-        currentBalance:
-            "موجودی فعلی",
-
-        budgetRemaining:
-            "بودجه باقی‌مانده",
-
-        thisMonth:
-            "این ماه",
-
-        healthyBalance:
-            "موجودی مناسب",
-
-        used:
-            "مصرف شده",
-
-        expenseOverview:
-            "بررسی هزینه‌ها",
-
-        spendingThisMonth:
-            "هزینه‌های این ماه",
-
-        budget:
-            "بودجه",
-
-        monthlyBudget:
-            "بودجه ماهانه",
-
-        totalBudget:
-            "کل بودجه",
-
-        spent:
-            "هزینه شده",
-
-        remaining:
-            "باقی‌مانده",
-
-        onTrack:
-            "وضعیت بودجه شما مناسب است",
-
-        activity:
-            "فعالیت‌ها",
-
-        recentTransactions:
-            "تراکنش‌های اخیر",
-
-        today:
-            "امروز",
-
-        yesterday:
-            "دیروز",
-
-        foodRestaurant:
-            "رستوران و غذا",
-
-        monthlySalary:
-            "حقوق ماهانه",
-
-        transportation:
-            "حمل‌ونقل",
-
-        viewAll:
-            "مشاهده همه",
-
-        personal:
-            "شخصی",
-
-        language:
-            "زبان",
-
-        english:
-            "انگلیسی",
-
-        persian:
-            "فارسی"
+        totalIncome: "کل درآمد",
+        totalExpenses: "کل هزینه‌ها",
+        currentBalance: "موجودی فعلی",
+        budgetRemaining: "بودجه باقی‌مانده",
+        thisMonth: "این ماه",
+        healthyBalance: "موجودی مناسب",
+        used: "مصرف شده",
+        expenseOverview: "بررسی هزینه‌ها",
+        spendingThisMonth: "هزینه‌های این ماه",
+        budget: "بودجه",
+        monthlyBudget: "بودجه ماهانه",
+        totalBudget: "کل بودجه",
+        spent: "هزینه شده",
+        remaining: "باقی‌مانده",
+        onTrack: "وضعیت بودجه شما مناسب است",
+        activity: "فعالیت‌ها",
+        recentTransactions: "تراکنش‌های اخیر",
+        today: "امروز",
+        yesterday: "دیروز",
+        foodRestaurant: "رستوران و غذا",
+        monthlySalary: "حقوق ماهانه",
+        transportation: "حمل‌ونقل",
+        viewAll: "مشاهده همه"
     }
 
 };
 
 
 // =========================
-// LANGUAGE
+// STATE
 // =========================
 
 let currentLanguage =
-    localStorage.getItem(
-        "finplan-language"
-    ) || "en";
+    localStorage.getItem("finplan-language") || "en";
 
+let currentCurrency =
+    localStorage.getItem("finplan-currency") || "USD";
+
+let dashboardData = null;
+
+
+// =========================
+// TRANSLATION
+// =========================
 
 function t(key) {
 
-    return (
-        translations[currentLanguage]?.[key]
-        || key
-    );
+    return translations[currentLanguage]?.[key] || key;
 
 }
 
+
+// =========================
+// APPLY LANGUAGE
+// =========================
 
 function applyLanguage() {
 
     document.documentElement.lang =
         currentLanguage;
-
 
     document.documentElement.dir =
         currentLanguage === "fa"
@@ -236,30 +127,61 @@ function applyLanguage() {
         .querySelectorAll("[data-i18n]")
         .forEach(element => {
 
-            const key =
-                element.dataset.i18n;
-
-
             element.textContent =
-                t(key);
+                t(element.dataset.i18n);
 
         });
 
 
     updateLanguageButton();
 
+
+    if (dashboardData) {
+        renderDashboard(dashboardData);
+    }
+
 }
 
 
-function setLanguage(language) {
+// =========================
+// LANGUAGE BUTTON
+// =========================
 
-    if (!translations[language]) {
+function updateLanguageButton() {
+
+    const element =
+        document.querySelector(
+            ".language-current"
+        );
+
+    if (!element) {
         return;
     }
 
 
-    currentLanguage =
-        language;
+    element.textContent =
+        currentLanguage === "fa"
+            ? "FA"
+            : "EN";
+
+}
+
+
+// =========================
+// CHANGE LANGUAGE
+// =========================
+
+function setLanguage(language) {
+
+    if (
+        language !== "en" &&
+        language !== "fa"
+    ) {
+        return;
+    }
+
+
+    currentLanguage = language;
 
 
     localStorage.setItem(
@@ -274,101 +196,22 @@ function setLanguage(language) {
 
 
 // =========================
-// CURRENCY
+// CURRENCY BUTTON
 // =========================
-
-let currentCurrency =
-    localStorage.getItem(
-        "finplan-currency"
-    ) || "USD";
-
-
-function formatMoney(amount) {
-
-    const numericAmount =
-        Number(amount);
-
-
-    if (Number.isNaN(numericAmount)) {
-
-        return amount;
-
-    }
-
-
-    const isNegative =
-        numericAmount < 0;
-
-
-    const absoluteAmount =
-        Math.abs(numericAmount);
-
-
-    // تومان
-
-    if (currentCurrency === "IRR") {
-
-        const formatted =
-            new Intl.NumberFormat(
-                "fa-IR"
-            ).format(
-                absoluteAmount
-            );
-
-
-        return (
-            (isNegative ? "-" : "") +
-            formatted +
-            " تومان"
-        );
-
-    }
-
-
-    // USD
-
-    const formatted =
-        new Intl.NumberFormat(
-            "en-US"
-        ).format(
-            absoluteAmount
-        );
-
-
-    return (
-        (isNegative ? "-" : "") +
-        "$" +
-        formatted
-    );
-
-}
-
 
 function updateCurrencyButton() {
 
-    const button =
-        document.getElementById(
-            "currencySelector"
-        );
-
-
-    if (!button) {
-        return;
-    }
-
-
-    const text =
-        button.querySelector(
+    const element =
+        document.querySelector(
             ".currency-current"
         );
 
-
-    if (!text) {
+    if (!element) {
         return;
     }
 
 
-    text.textContent =
+    element.textContent =
         currentCurrency === "IRR"
             ? "تومان"
             : "USD";
@@ -376,28 +219,38 @@ function updateCurrencyButton() {
 }
 
 
-function updateCurrencyDisplay() {
+// =========================
+// FORMAT MONEY
+// =========================
 
-    document
-        .querySelectorAll(
-            "[data-money]"
-        )
-        .forEach(element => {
+function formatMoney(amount) {
 
-            const amount =
-                element.dataset.money;
+    const value = Number(amount) || 0;
 
 
-            element.textContent =
-                formatMoney(amount);
+    if (currentCurrency === "IRR") {
 
-        });
+        return (
+            new Intl.NumberFormat("fa-IR")
+                .format(value)
+            + " تومان"
+        );
+
+    }
 
 
-    updateCurrencyButton();
+    return (
+        "$" +
+        new Intl.NumberFormat("en-US")
+            .format(value)
+    );
 
 }
 
+
+// =========================
+// CHANGE CURRENCY
+// =========================
 
 function setCurrency(currency) {
 
@@ -405,14 +258,11 @@ function setCurrency(currency) {
         currency !== "USD" &&
         currency !== "IRR"
     ) {
-
         return;
-
     }
 
 
-    currentCurrency =
-        currency;
+    currentCurrency = currency;
 
 
     localStorage.setItem(
@@ -421,67 +271,303 @@ function setCurrency(currency) {
     );
 
 
-    updateCurrencyDisplay();
+    updateCurrencyButton();
+
+
+    if (dashboardData) {
+        renderDashboard(dashboardData);
+    }
 
 }
 
 
 // =========================
-// LANGUAGE BUTTON
+// RENDER DASHBOARD
 // =========================
 
-function updateLanguageButton() {
+function renderDashboard(data) {
 
-    const button =
+    dashboardData = data;
+
+
+    // -------------------------
+    // SUMMARY
+    // -------------------------
+
+    const totalIncome =
         document.getElementById(
-            "languageSelector"
+            "totalIncome"
+        );
+
+    const totalExpenses =
+        document.getElementById(
+            "totalExpenses"
+        );
+
+    const currentBalance =
+        document.getElementById(
+            "currentBalance"
+        );
+
+    const budgetRemaining =
+        document.getElementById(
+            "budgetRemaining"
         );
 
 
-    if (!button) {
-        return;
+    if (totalIncome) {
+
+        totalIncome.textContent =
+            formatMoney(data.income);
+
     }
 
 
-    const text =
-        button.querySelector(
-            ".language-current"
+    if (totalExpenses) {
+
+        totalExpenses.textContent =
+            formatMoney(data.expense);
+
+    }
+
+
+    if (currentBalance) {
+
+        currentBalance.textContent =
+            formatMoney(data.balance);
+
+    }
+
+
+    if (budgetRemaining) {
+
+        budgetRemaining.textContent =
+            formatMoney(data.budget_remaining);
+
+    }
+
+
+    // -------------------------
+    // BUDGET
+    // -------------------------
+
+    const totalBudget =
+        document.getElementById(
+            "totalBudget"
+        );
+
+    const budgetSpent =
+        document.getElementById(
+            "budgetSpent"
+        );
+
+    const budgetRemainingDetail =
+        document.getElementById(
+            "budgetRemainingDetail"
         );
 
 
-    if (!text) {
-        return;
+    if (totalBudget) {
+
+        totalBudget.textContent =
+            formatMoney(data.total_budget);
+
     }
 
 
-    text.textContent =
-        currentLanguage === "fa"
-            ? "FA"
-            : "EN";
+    if (budgetSpent) {
+
+        budgetSpent.textContent =
+            formatMoney(data.budget_spent);
+
+    }
+
+
+    if (budgetRemainingDetail) {
+
+        budgetRemainingDetail.textContent =
+            formatMoney(data.budget_remaining);
+
+    }
+
+
+    // -------------------------
+    // BUDGET PERCENTAGE
+    // -------------------------
+
+    let percentage = 0;
+
+
+    if (Number(data.total_budget) > 0) {
+
+        percentage =
+            (
+                Number(data.budget_spent) /
+                Number(data.total_budget)
+            ) * 100;
+
+    }
+
+
+    const safePercentage =
+        Math.max(
+            0,
+            Math.min(
+                100,
+                percentage
+            )
+        );
+
+
+    const roundedPercentage =
+        Math.round(percentage);
+
+
+    const budgetPercentage =
+        document.getElementById(
+            "budgetPercentage"
+        );
+
+    const budgetPercentagePanel =
+        document.getElementById(
+            "budgetPercentagePanel"
+        );
+
+
+    if (budgetPercentage) {
+
+        budgetPercentage.textContent =
+            `${roundedPercentage}%`;
+
+    }
+
+
+    if (budgetPercentagePanel) {
+
+        budgetPercentagePanel.textContent =
+            `${roundedPercentage}%`;
+
+    }
+
+
+    // -------------------------
+    // PROGRESS
+    // -------------------------
+
+    const progress =
+        document.getElementById(
+            "budgetProgress"
+        );
+
+
+    if (progress) {
+
+        progress.style.width =
+            `${safePercentage}%`;
+
+    }
+
+
+    // -------------------------
+    // STATUS
+    // -------------------------
+
+    const status =
+        document.getElementById(
+            "budgetStatus"
+        );
+
+
+    if (status) {
+
+        if (
+            data.budget_status ===
+            "over_budget"
+        ) {
+
+            status.textContent =
+                currentLanguage === "fa"
+                    ? "از بودجه تعیین‌شده عبور کرده‌اید"
+                    : "You've exceeded your budget";
+
+        } else {
+
+            status.textContent =
+                t("onTrack");
+
+        }
+
+    }
 
 }
 
 
 // =========================
-// PAGE INITIALIZATION
+// LOAD DASHBOARD
+// =========================
+
+async function loadDashboard() {
+
+    const month = "2026-08";
+
+
+    try {
+
+        const response =
+            await fetch(
+                `http://127.0.0.1:8000/dashboard?month=${month}`
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                `HTTP error: ${response.status}`
+            );
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "Dashboard data:",
+            data
+        );
+
+
+        renderDashboard(data);
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Dashboard API error:",
+            error
+        );
+
+    }
+
+}
+
+
+// =========================
+// INITIALIZATION
 // =========================
 
 document.addEventListener(
     "DOMContentLoaded",
     () => {
 
-
-        // Language
-
         applyLanguage();
 
-
-        // Currency
-
-        updateCurrencyDisplay();
+        updateCurrencyButton();
 
 
-        // Language button
+        // LANGUAGE
 
         const languageSelector =
             document.getElementById(
@@ -495,14 +581,10 @@ document.addEventListener(
                 "click",
                 () => {
 
-                    const newLanguage =
+                    setLanguage(
                         currentLanguage === "en"
                             ? "fa"
-                            : "en";
-
-
-                    setLanguage(
-                        newLanguage
+                            : "en"
                     );
 
                 }
@@ -511,7 +593,7 @@ document.addEventListener(
         }
 
 
-        // Currency button
+        // CURRENCY
 
         const currencySelector =
             document.getElementById(
@@ -525,20 +607,21 @@ document.addEventListener(
                 "click",
                 () => {
 
-                    const newCurrency =
+                    setCurrency(
                         currentCurrency === "USD"
                             ? "IRR"
-                            : "USD";
-
-
-                    setCurrency(
-                        newCurrency
+                            : "USD"
                     );
 
                 }
             );
 
         }
+
+
+        // LOAD API DATA
+
+        loadDashboard();
 
     }
 );

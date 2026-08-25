@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from backend.database import SessionLocal
 from backend.models import Transaction, Budget
 from datetime import datetime
+from fastapi.middleware.cors import CORSMiddleware
 from backend.schemas import (
     TransactionCreate,
     TransactionResponse,
@@ -18,6 +19,16 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title="FinPlan API",
     description="Personal financial planning API",
+)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://127.0.0.1:5500",
+        "http://localhost:5500"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 def get_month_range(month: str):
     start_date = datetime.strptime(

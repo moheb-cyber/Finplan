@@ -29,13 +29,11 @@
                 </div>
 
                 <div>
-
                     <h1>FinPlan</h1>
 
                     <span data-i18n="personalFinance">
                         PERSONAL FINANCE
                     </span>
-
                 </div>
 
             </div>
@@ -43,55 +41,39 @@
 
             <nav class="navigation">
 
-                <a
-                    href="#"
-                    class="nav-item active"
-                >
+                <a href="#" class="nav-item active">
                     <span>⌂</span>
 
                     <span data-i18n="dashboard">
                         Dashboard
                     </span>
-
                 </a>
 
 
-                <a
-                    href="#"
-                    class="nav-item"
-                >
+                <a href="#" class="nav-item">
                     <span>↕</span>
 
                     <span data-i18n="transactions">
                         Transactions
                     </span>
-
                 </a>
 
 
-                <a
-                    href="#"
-                    class="nav-item"
-                >
+                <a href="#" class="nav-item">
                     <span>◫</span>
 
                     <span data-i18n="budgets">
                         Budgets
                     </span>
-
                 </a>
 
 
-                <a
-                    href="#"
-                    class="nav-item"
-                >
+                <a href="#" class="nav-item">
                     <span>◒</span>
 
                     <span data-i18n="analytics">
                         Analytics
                     </span>
-
                 </a>
 
             </nav>
@@ -99,16 +81,12 @@
 
             <div class="sidebar-bottom">
 
-                <a
-                    href="#"
-                    class="nav-item"
-                >
+                <a href="#" class="nav-item">
                     <span>⚙</span>
 
                     <span data-i18n="settings">
                         Settings
                     </span>
-
                 </a>
 
 
@@ -117,7 +95,6 @@
                     <div class="avatar">
                         M
                     </div>
-
 
                     <div class="profile-info">
 
@@ -142,7 +119,6 @@
 
         <main class="main">
 
-
             <!-- HEADER -->
 
             <header class="header">
@@ -156,7 +132,6 @@
                         PERSONAL FINANCE
                     </span>
 
-
                     <h2 data-i18n="dashboard">
                         Dashboard
                     </h2>
@@ -165,7 +140,6 @@
 
 
                 <div class="header-actions">
-
 
                     <!-- LANGUAGE -->
 
@@ -260,7 +234,6 @@
 
             <section class="summary-grid">
 
-
                 <!-- INCOME -->
 
                 <article class="summary-card">
@@ -274,7 +247,6 @@
                             Total Income
                         </span>
 
-
                         <span class="card-icon income">
                             ↗
                         </span>
@@ -284,15 +256,13 @@
 
                     <strong
                         class="card-value"
-                        data-money="100000000"
+                        id="totalIncome"
                     >
-                        $100,000,000
+                        $0
                     </strong>
 
 
                     <span class="card-meta positive">
-
-                        +12.4%
 
                         <span data-i18n="thisMonth">
                             this month
@@ -316,7 +286,6 @@
                             Total Expenses
                         </span>
 
-
                         <span class="card-icon expense">
                             ↘
                         </span>
@@ -326,15 +295,13 @@
 
                     <strong
                         class="card-value"
-                        data-money="8300000"
+                        id="totalExpenses"
                     >
-                        $8,300,000
+                        $0
                     </strong>
 
 
                     <span class="card-meta negative">
-
-                        +4.8%
 
                         <span data-i18n="thisMonth">
                             this month
@@ -358,7 +325,6 @@
                             Current Balance
                         </span>
 
-
                         <span class="card-icon balance">
                             $
                         </span>
@@ -368,9 +334,9 @@
 
                     <strong
                         class="card-value"
-                        data-money="91700000"
+                        id="currentBalance"
                     >
-                        $91,700,000
+                        $0
                     </strong>
 
 
@@ -397,7 +363,6 @@
                             Budget Remaining
                         </span>
 
-
                         <span class="card-icon budget">
                             ◫
                         </span>
@@ -407,15 +372,17 @@
 
                     <strong
                         class="card-value"
-                        data-money="10200000"
+                        id="budgetRemaining"
                     >
-                        $10,200,000
+                        $0
                     </strong>
 
 
                     <span class="card-meta">
 
-                        40%
+                        <span id="budgetPercentage">
+                            0%
+                        </span>
 
                         <span data-i18n="used">
                             used
@@ -432,7 +399,6 @@
 
             <section class="dashboard-grid">
 
-
                 <!-- EXPENSE OVERVIEW -->
 
                 <article class="panel expense-panel">
@@ -447,7 +413,6 @@
                             >
                                 EXPENSE OVERVIEW
                             </span>
-
 
                             <h3 data-i18n="spendingThisMonth">
                                 Spending this month
@@ -600,7 +565,6 @@
                                 BUDGET
                             </span>
 
-
                             <h3 data-i18n="monthlyBudget">
                                 Monthly budget
                             </h3>
@@ -622,12 +586,9 @@
 
                         <div class="budget-number">
 
-                            <strong
-                                data-money="17000000"
-                            >
-                                $17,000,000
+                            <strong id="totalBudget">
+                                $0
                             </strong>
-
 
                             <span data-i18n="totalBudget">
                                 total budget
@@ -636,8 +597,11 @@
                         </div>
 
 
-                        <div class="budget-percentage">
-                            40%
+                        <div
+                            class="budget-percentage"
+                            id="budgetPercentagePanel"
+                        >
+                            0%
                         </div>
 
                     </div>
@@ -647,7 +611,8 @@
 
                         <div
                             class="progress-fill"
-                            style="width:40%"
+                            id="budgetProgress"
+                            style="width:0%"
                         ></div>
 
                     </div>
@@ -661,11 +626,8 @@
                                 Spent
                             </span>
 
-
-                            <strong
-                                data-money="6800000"
-                            >
-                                $6,800,000
+                            <strong id="budgetSpent">
+                                $0
                             </strong>
 
                         </div>
@@ -677,11 +639,8 @@
                                 Remaining
                             </span>
 
-
-                            <strong
-                                data-money="10200000"
-                            >
-                                $10,200,000
+                            <strong id="budgetRemainingDetail">
+                                $0
                             </strong>
 
                         </div>
@@ -693,8 +652,10 @@
 
                         <span class="status-dot"></span>
 
-
-                        <span data-i18n="onTrack">
+                        <span
+                            id="budgetStatus"
+                            data-i18n="onTrack"
+                        >
                             You're on track with your budget
                         </span>
 
@@ -709,7 +670,6 @@
 
             <section class="panel transactions-panel">
 
-
                 <div class="panel-header">
 
                     <div>
@@ -720,7 +680,6 @@
                         >
                             ACTIVITY
                         </span>
-
 
                         <h3 data-i18n="recentTransactions">
                             Recent transactions
@@ -741,9 +700,6 @@
 
                 <div class="transactions-list">
 
-
-                    <!-- FOOD -->
-
                     <div class="transaction">
 
                         <div class="transaction-icon expense">
@@ -756,7 +712,6 @@
                             <strong data-i18n="foodRestaurant">
                                 Food & Restaurant
                             </strong>
-
 
                             <span>
 
@@ -773,15 +728,13 @@
 
                         <strong
                             class="transaction-amount expense-text"
-                            data-money="-650000"
+                            id="foodTransaction"
                         >
-                            -$650,000
+                            $0
                         </strong>
 
                     </div>
 
-
-                    <!-- SALARY -->
 
                     <div class="transaction">
 
@@ -795,7 +748,6 @@
                             <strong data-i18n="monthlySalary">
                                 Monthly Salary
                             </strong>
-
 
                             <span>
 
@@ -812,15 +764,13 @@
 
                         <strong
                             class="transaction-amount income-text"
-                            data-money="100000000"
+                            id="salaryTransaction"
                         >
-                            +$100,000,000
+                            $0
                         </strong>
 
                     </div>
 
-
-                    <!-- TRANSPORT -->
 
                     <div class="transaction">
 
@@ -835,7 +785,6 @@
                                 Transportation
                             </strong>
 
-
                             <span>
                                 Aug 22 · Transport
                             </span>
@@ -845,9 +794,9 @@
 
                         <strong
                             class="transaction-amount expense-text"
-                            data-money="-200000"
+                            id="transportTransaction"
                         >
-                            -$200,000
+                            $0
                         </strong>
 
                     </div>
@@ -855,7 +804,6 @@
                 </div>
 
             </section>
-
 
         </main>
 
