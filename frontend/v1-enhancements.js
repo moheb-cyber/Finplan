@@ -30,11 +30,11 @@
             const used = spent[item.category] || 0;
             const percent = Number(item.amount) ? Math.round(used / Number(item.amount) * 100) : 0;
             return `<div class="budget-item"><div class="budget-item-top"><strong>${escapeHTML(item.category)}</strong><span>${escapeHTML(money(item.amount))}</span></div><div class="budget-item-bar"><div class="budget-item-fill ${percent > 100 ? "over" : ""}" style="width:${Math.min(percent, 100)}%"></div></div><div class="budget-item-bottom"><span>${escapeHTML(money(used))} ${lang() === "fa" ? "هزینه" : "spent"}</span><span>${percent}%</span></div></div>`;
-        }).join("") : `<div class="empty-state">${lang() === "fa" ? "برای این ماه بودجه‌ای ثبت نشده" : "No budgets set for this month"}</div>`;
+        }).join("") : `<div class="empty-state">${lang() === "fa" ? "برای این ماه بودجه‌ای ثبت نشده" : "No budgets set for this month"}`;
     }
 
     function ensureAnalyticsPanel() {
-        if $("#analyticsPanel") return;
+        if ($("#analyticsPanel")) return;
         const main = $(".main");
         if (!main) return;
         main.insertAdjacentHTML("beforeend", `<section id="analyticsPanel" class="panel v1-analytics" hidden><div class="panel-header"><div><span class="panel-label">ANALYTICS</span><h3>${lang() === "fa" ? "تحلیل مالی" : "Financial insights"}</h3></div><span class="panel-caption">${lang() === "fa" ? "این ماه" : "This month"}</span></div><div class="insight-grid"><div><span>${lang() === "fa" ? "میانگین هزینه" : "Avg. expense"}</span><strong id="avgExpense">—</strong></div><div><span>${lang() === "fa" ? "بیشترین دسته" : "Top category"}</span><strong id="topCategory">—</strong></div><div><span>${lang() === "fa" ? "تعداد تراکنش" : "Transactions"}</span><strong id="transactionCount">0</strong></div></div><div class="category-breakdown" id="categoryBreakdown"></div></section>`);
@@ -66,7 +66,7 @@
             ensureAnalyticsPanel();
             $("#analyticsPanel")?.setAttribute("hidden", section !== "analytics");
             if (section === "budgets") $(".budget-list-panel")?.removeAttribute("hidden");
-        });
+        }));
     }
 
     async function load() {
