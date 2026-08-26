@@ -16,13 +16,14 @@ app.add_middleware(CORSMiddleware, allow_origins=["http://127.0.0.1:5500", "http
 app.include_router(auth_router)
 
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
-app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
+
+@app.get("/", include_in_schema=False)
+def root(): return FileResponse(FRONTEND_DIR / "index.html")
 
 @app.get("/app", include_in_schema=False)
 def serve_app(): return FileResponse(FRONTEND_DIR / "index.html")
 
-@app.get("/", include_in_schema=False)
-def root(): return FileResponse(FRONTEND_DIR / "index.html")
+app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 
 def get_month_range(month: str):
     start=datetime.strptime(month+"-01","%Y-%m-%d"); end=start.replace(year=start.year+1,month=1) if start.month==12 else start.replace(month=start.month+1); return start,end
@@ -33,9 +34,6 @@ def get_db():
     try: yield db
     finally: db.close()
 def uid(user): return int(user.id)
-
-def require_owner(user, item):
-    if item.user_id != uid(user): raise HTTPException(404, "Resource not found")
 
 @app.post("/transactions",response_model=TransactionResponse)
 def create_transaction(data:TransactionCreate,db:Session=Depends(get_db),user=Depends(current_user)):
@@ -71,7 +69,7 @@ def create_budget(data:BudgetCreate,db:Session=Depends(get_db),user=Depends(curr
 
 @app.get("/budgets",response_model=list[BudgetResponse])
 def get_budgets(month:str|None=None,db:Session=Depends(get_db),user=Depends(current_user)):
-    q=db.query(Budget).filter(Budget.user_id==uid(user));
+    q=db.query(Budget).filter(Budget.user_id==uid(user))
     if month:q=q.filter(Budget.month==month)
     return q.all()
 
@@ -100,14 +98,14 @@ def dashboard_budgets(month:str=Depends(validate_month_query),db:Session=Depends
 
 @app.get("/transactions/summary")
 def transaction_summary(from_date:str|None=None,to_date:str|None=None,db:Session=Depends(get_db),user=Depends(current_user)):
-    q=db.query(Transaction).filter(Transaction.user_id==uid(user));
+    q=db.query(Transaction).filter(Transaction.user_id==uid(user))
     if from_date:q=q.filter(Transaction.created_at>=datetime.strptime(from_date,"%Y-%m-%d"))
     if to_date:q=q.filter(Transaction.created_at<=datetime.strptime(to_date,"%Y-%m-%d").replace(hour=23,minute=59,second=59))
     ts=q.all();i=sum(t.amount for t in ts if t.type=="income");e=sum(t.amount for t in ts if t.type=="expense");return {"total_income":i,"total_expense":e,"balance":i-e,"transaction_count":len(ts)}
 
 @app.get("/transactions/expenses-by-category")
 def expenses_by_category(from_date:str|None=None,to_date:str|None=None,db:Session=Depends(get_db),user=Depends(current_user)):
-    q=db.query(Transaction).filter(Transaction.user_id==uid(user),Transaction.type=="expense");
+    q=db.query(Transaction).filter(Transaction.user_id==uid(user),Transaction.type=="expense")
     if from_date:q=q.filter(Transaction.created_at>=datetime.strptime(from_date,"%Y-%m-%d"))
     if to_date:q=q.filter(Transaction.created_at<=datetime.strptime(to_date,"%Y-%m-%d").replace(hour=23,minute=59,second=59))
     out={}
