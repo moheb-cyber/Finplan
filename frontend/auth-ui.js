@@ -1,6 +1,17 @@
 /* FinPlan v1 — authentication UI */
 (() => {
     const API_BASE = window.FINPLAN_API_BASE || "http://127.0.0.1:8000";
+    const nativeFetch = window.fetch.bind(window);
+    window.fetch = (input, init = {}) => {
+        const url = typeof input === "string" ? input : input?.url || "";
+        if (url.startsWith(API_BASE)) {
+            const headers = new Headers(init.headers || (typeof input !== "string" ? input.headers : undefined));
+            const token = localStorage.getItem("finplan-token");
+            if (token && !headers.has("Authorization")) headers.set("Authorization", `Bearer ${token}`);
+            return nativeFetch(input, { ...init, headers });
+        }
+        return nativeFetch(input, init);
+    };
     const $ = (s, r = document) => r.querySelector(s);
     const fa = () => document.documentElement.lang === "fa";
     const token = () => localStorage.getItem("finplan-token");
