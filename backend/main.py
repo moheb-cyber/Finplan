@@ -1,13 +1,16 @@
 from fastapi import FastAPI, Depends, HTTPException
-from backend.database import Base, engine, SessionLocal
+from backend.database import Base, engine, SessionLocal, ensure_schema
 from sqlalchemy.orm import Session
-from backend.models import Transaction, Budget
+from backend.models import Transaction, Budget, User
 from datetime import datetime
 from fastapi.middleware.cors import CORSMiddleware
 from backend.schemas import (TransactionCreate, TransactionResponse, BudgetCreate, BudgetResponse, BudgetUpdate, DashboardResponse, validate_month_format)
 from backend.auth_router import router as auth_router
 
-Base.metadata.create_all(bind=engine)
+# Models are imported before schema initialization so the existing database is
+# migrated in place without replacing or recreating the user's data.
+ensure_schema()
+
 app = FastAPI(title="FinPlan API", description="Personal financial planning API")
 app.add_middleware(CORSMiddleware, allow_origins=["http://127.0.0.1:5500", "http://localhost:5500"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 app.include_router(auth_router)
@@ -19,52 +22,53 @@ def get_month_range(month: str):
 
 def validate_month_query(month: str) -> str: return validate_month_format(month)
 def get_db():
-    db=SessionLocal()
+    db = SessionLocal()
     try: yield db
     finally: db.close()
 
 @app.get("/")
-def root(): return {"message":"FinPlan API is running"}
+def root(): return {"message": "FinPlan API is running"}
 
 @app.post("/transactions", response_model=TransactionResponse)
-def create_transaction(data: TransactionCreate, db: Session=Depends(get_db)):
-    item=Transaction(title=data.title, amount=data.amount, type=data.type, category=data.category); db.add(item); db.commit(); db.refresh(item); return item
+def create_transaction(data: TransactionCreate, db: Session = Depends(get_db)):
+    item = Transaction(title=data.title, amount=data.amount, type=data.type, category=data.category)
+    db.add(item); db.commit(); db.refresh(item); return item
 
 @app.get("/transactions", response_model=list[TransactionResponse])
 def get_transactions(type: str|None=None, category: str|None=None, date: str|None=None, from_date: str|None=None, to_date: str|None=None, db: Session=Depends(get_db)):
-    q=db.query(Transaction)
-    if type: q=q.filter(Transaction.type==type)
-    if category: q=q.filter(Transaction.category==category)
+    query=db.query(Transaction)
+    if type: query=query.filter(Transaction.type==type)
+    if category: query=query.filter(Transaction.category==category)
     if date:
-        start=datetime.strptime(date,"%Y-%m-%d"); q=q.filter(Transaction.created_at>=start,Transaction.created_at<=start.replace(hour=23,minute=59,second=59))
-    if from_date: q=q.filter(Transaction.created_at>=datetime.strptime(from_date,"%Y-%m-%d"))
-    if to_date: q=q.filter(Transaction.created_at<=datetime.strptime(to_date,"%Y-%m-%d").replace(hour=23,minute=59,second=59))
-    return q.order_by(Transaction.created_at.desc()).all()
+        start=datetime.strptime(date,"%Y-%m-%d"); query=query.filter(Transaction.created_at>=start, Transaction.created_at<=start.replace(hour=23,minute=59,second=59))
+    if from_date: query=query.filter(Transaction.created_at>=datetime.strptime(from_date,"%Y-%m-%d"))
+    if to_date: query=query.filter(Transaction.created_at<=datetime.strptime(to_date,"%Y-%m-%d").replace(hour=23,minute=59,second=59))
+    return query.order_by(Transaction.created_at.desc()).all()
 
 @app.put("/transactions/{transaction_id}")
-def update_transaction(transaction_id:int,data:TransactionCreate,db:Session=Depends(get_db)):
+def update_transaction(transaction_id:int, data:TransactionCreate, db:Session=Depends(get_db)):
     item=db.query(Transaction).filter(Transaction.id==transaction_id).first()
     if not item: raise HTTPException(404,"Transaction not found")
     item.title=data.title; item.amount=data.amount; item.type=data.type; item.category=data.category; db.commit(); db.refresh(item); return item
 
 @app.delete("/transactions/{transaction_id}")
-def delete_transaction(transaction_id:int,db:Session=Depends(get_db)):
+def delete_transaction(transaction_id:int, db:Session=Depends(get_db)):
     item=db.query(Transaction).filter(Transaction.id==transaction_id).first()
     if not item: raise HTTPException(404,"Transaction not found")
     db.delete(item); db.commit(); return {"message":"Transaction deleted successfully"}
 
 @app.post("/budgets", response_model=BudgetResponse)
-def create_budget(data:BudgetCreate,db:Session=Depends(get_db)):
+def create_budget(data:BudgetCreate, db:Session=Depends(get_db)):
     if db.query(Budget).filter(Budget.category==data.category,Budget.month==data.month).first(): raise HTTPException(400,"Budget already exists for this category and month")
     item=Budget(category=data.category,amount=data.amount,month=data.month); db.add(item); db.commit(); db.refresh(item); return item
 
-@app.get("/budgets",response_model=list[BudgetResponse])
+@app.get("/budgets", response_model=list[BudgetResponse])
 def get_budgets(month:str|None=None,db:Session=Depends(get_db)):
     q=db.query(Budget)
     if month:q=q.filter(Budget.month==month)
     return q.all()
 
-@app.put("/budgets/{budget_id}",response_model=BudgetResponse)
+@app.put("/budgets/{budget_id}", response_model=BudgetResponse)
 def update_budget(budget_id:int,data:BudgetUpdate,db:Session=Depends(get_db)):
     item=db.query(Budget).filter(Budget.id==budget_id).first()
     if not item: raise HTTPException(404,"Budget not found")
