@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
-from backend.database import Base, engine
+from backend.database import Base, engine, SessionLocal
 from sqlalchemy.orm import Session
-from backend.database import SessionLocal
 from backend.models import Transaction, Budget
 from datetime import datetime
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,41 +11,38 @@ from backend.schemas import (
     BudgetResponse,
     BudgetUpdate,
     DashboardResponse,
-    validate_month_format
+    validate_month_format,
 )
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="FinPlan API",
     description="Personal financial planning API",
 )
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://127.0.0.1:5500",
-        "http://localhost:5500"
+        "http://localhost:5500",
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
 def get_month_range(month: str):
-    start_date = datetime.strptime(
-        month + "-01",
-        "%Y-%m-%d"
-    )
+    start_date = datetime.strptime(month + "-01", "%Y-%m-%d")
 
     if start_date.month == 12:
-        end_date = start_date.replace(
-            year=start_date.year + 1,
-            month=1
-        )
+        end_date = start_date.replace(year=start_date.year + 1, month=1)
     else:
-        end_date = start_date.replace(
-            month=start_date.month + 1
-        )
+        end_date = start_date.replace(month=start_date.month + 1)
 
     return start_date, end_date
+
 
 def validate_month_query(month: str) -> str:
     return validate_month_format(month)
@@ -54,7 +50,6 @@ def validate_month_query(month: str) -> str:
 
 def get_db():
     db = SessionLocal()
-
     try:
         yield db
     finally:
@@ -63,49 +58,36 @@ def get_db():
 
 @app.get("/")
 def root():
-    return {
-        "message": "FinPlan API is running"
-    }
+    return {"message": "FinPlan API is running"}
 
 
-# =========================
-# CREATE
-# =========================
-
-@app.post(
-    "/transactions",
-    response_model=TransactionResponse
-)
+@app.post("/transactions", response_model=TransactionResponse)
 def create_transaction(
     transaction_data: TransactionCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     transaction = Transaction(
         title=transaction_data.title,
         amount=transaction_data.amount,
         type=transaction_data.type,
-        category=transaction_data.category
+        category=transaction_data.category,
     )
-
     db.add(transaction)
     db.commit()
     db.refresh(transaction)
-
     return transaction
 
-@app.post(
-    "/budgets",
-    response_model=BudgetResponse
-)
+
+@app.post("/budgets", response_model=BudgetResponse)
 def create_budget(
     budget_data: BudgetCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     existing_budget = (
         db.query(Budget)
         .filter(
             Budget.category == budget_data.category,
-            Budget.month == budget_data.month
+            Budget.month == budget_data.month,
         )
         .first()
     )
@@ -113,85 +95,55 @@ def create_budget(
     if existing_budget is not None:
         raise HTTPException(
             status_code=400,
-            detail="Budget already exists for this category and month"
+            detail="Budget already exists for this category and month",
         )
 
     budget = Budget(
         category=budget_data.category,
         amount=budget_data.amount,
-        month=budget_data.month
+        month=budget_data.month,
     )
-
     db.add(budget)
     db.commit()
     db.refresh(budget)
-
     return budget
 
 
-@app.get(
-    "/budgets",
-    response_model=list[BudgetResponse]
-)
+@app.get("/budgets", response_model=list[BudgetResponse])
 def get_budgets(
     month: str | None = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     query = db.query(Budget)
-
     if month is not None:
         query = query.filter(Budget.month == month)
-
     return query.all()
+
 
 @app.get("/budgets/summary")
 def get_budget_summary(
     month: str = Depends(validate_month_query),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     start_date, end_date = get_month_range(month)
-
-    budgets = (
-        db.query(Budget)
-        .filter(Budget.month == month)
-        .all()
-    )
-
+    budgets = db.query(Budget).filter(Budget.month == month).all()
     result = []
 
     for budget in budgets:
-
         expenses = (
             db.query(Transaction)
             .filter(
                 Transaction.type == "expense",
                 Transaction.category == budget.category,
                 Transaction.created_at >= start_date,
-                Transaction.created_at < end_date
+                Transaction.created_at < end_date,
             )
             .all()
         )
-
-        spent = sum(
-            transaction.amount
-            for transaction in expenses
-        )
-
+        spent = sum(transaction.amount for transaction in expenses)
         remaining = budget.amount - spent
-
-        if budget.amount > 0:
-            spent_percentage = round(
-                (spent / budget.amount) * 100,
-                2
-            )
-
-            remaining_percentage = round(
-                (remaining / budget.amount) * 100,
-                2
-            )
-        else:
-            spent_percentage = 0
-            remaining_percentage = 0
+        spent_percentage = round((spent / budget.amount) * 100, 2) if budget.amount > 0 else 0
+        remaining_percentage = round((remaining / budget.amount) * 100, 2) if budget.amount > 0 else 0
 
         if remaining > 0:
             status = "on_track"
@@ -207,148 +159,87 @@ def get_budget_summary(
             "remaining": remaining,
             "status": status,
             "spent_percentage": spent_percentage,
-            "remaining_percentage": remaining_percentage
+            "remaining_percentage": remaining_percentage,
         })
 
     return result
 
-@app.put(
-    "/budgets/{budget_id}",
-    response_model=BudgetResponse
-)
+
+@app.put("/budgets/{budget_id}", response_model=BudgetResponse)
 def update_budget(
     budget_id: int,
     budget_data: BudgetUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    budget = (
-        db.query(Budget)
-        .filter(Budget.id == budget_id)
-        .first()
-    )
-
+    budget = db.query(Budget).filter(Budget.id == budget_id).first()
     if budget is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Budget not found"
-        )
+        raise HTTPException(status_code=404, detail="Budget not found")
 
     existing_budget = (
         db.query(Budget)
         .filter(
             Budget.category == budget_data.category,
             Budget.month == budget_data.month,
-            Budget.id != budget_id
+            Budget.id != budget_id,
         )
         .first()
     )
-
     if existing_budget is not None:
         raise HTTPException(
             status_code=400,
-            detail="Budget already exists for this category and month"
+            detail="Budget already exists for this category and month",
         )
 
     budget.category = budget_data.category
     budget.amount = budget_data.amount
     budget.month = budget_data.month
-
     db.commit()
     db.refresh(budget)
-
     return budget
+
 
 @app.delete("/budgets/{budget_id}")
 def delete_budget(
     budget_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    budget = (
-        db.query(Budget)
-        .filter(Budget.id == budget_id)
-        .first()
-    )
-
+    budget = db.query(Budget).filter(Budget.id == budget_id).first()
     if budget is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Budget not found"
-        )
-
+        raise HTTPException(status_code=404, detail="Budget not found")
     db.delete(budget)
     db.commit()
+    return {"message": "Budget deleted successfully"}
 
-    return {
-        "message": "Budget deleted successfully"
-    }
 
-@app.get(
-    "/dashboard",
-    response_model=DashboardResponse
-)
+@app.get("/dashboard", response_model=DashboardResponse)
 def get_dashboard(
-   month: str = Depends(validate_month_query), 
-    db: Session = Depends(get_db)
+    month: str = Depends(validate_month_query),
+    db: Session = Depends(get_db),
 ):
     start_date, end_date = get_month_range(month)
-
     transactions = (
         db.query(Transaction)
         .filter(
             Transaction.created_at >= start_date,
-            Transaction.created_at < end_date
+            Transaction.created_at < end_date,
         )
         .all()
     )
 
-    total_income = sum(
-        transaction.amount
-        for transaction in transactions
-        if transaction.type == "income"
-    )
-
-    total_expense = sum(
-        transaction.amount
-        for transaction in transactions
-        if transaction.type == "expense"
-    )
-
+    total_income = sum(t.amount for t in transactions if t.type == "income")
+    total_expense = sum(t.amount for t in transactions if t.type == "expense")
     balance = total_income - total_expense
 
-    budgets = (
-        db.query(Budget)
-        .filter(Budget.month == month)
-        .all()
-    )
-
-    total_budget = sum(
-        budget.amount
-        for budget in budgets
-    )
-
-    budget_categories = {
-        budget.category
-        for budget in budgets
-    }
-
+    budgets = db.query(Budget).filter(Budget.month == month).all()
+    total_budget = sum(b.amount for b in budgets)
+    budget_categories = {b.category for b in budgets}
     budget_spent = sum(
-        transaction.amount
-        for transaction in transactions
-        if (
-            transaction.type == "expense"
-            and transaction.category in budget_categories
-        )
+        t.amount
+        for t in transactions
+        if t.type == "expense" and t.category in budget_categories
     )
-
     budget_remaining = total_budget - budget_spent
-
-    if total_budget > 0:
-        budget_spent_percentage = round(
-            (budget_spent / total_budget) * 100,
-            2
-        )
-    else:
-        budget_spent_percentage = 0
+    budget_spent_percentage = round((budget_spent / total_budget) * 100, 2) if total_budget > 0 else 0
 
     if total_budget == 0:
         budget_status = "no_budget"
@@ -368,51 +259,33 @@ def get_dashboard(
         "budget_spent": budget_spent,
         "budget_remaining": budget_remaining,
         "budget_spent_percentage": budget_spent_percentage,
-        "budget_status": budget_status
+        "budget_status": budget_status,
     }
+
 
 @app.get("/dashboard/budgets")
 def get_dashboard_budgets(
     month: str = Depends(validate_month_query),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     start_date, end_date = get_month_range(month)
-
-    budgets = (
-        db.query(Budget)
-        .filter(Budget.month == month)
-        .all()
-    )
-
+    budgets = db.query(Budget).filter(Budget.month == month).all()
     result = []
 
     for budget in budgets:
-
         expenses = (
             db.query(Transaction)
             .filter(
                 Transaction.type == "expense",
                 Transaction.category == budget.category,
                 Transaction.created_at >= start_date,
-                Transaction.created_at < end_date
+                Transaction.created_at < end_date,
             )
             .all()
         )
-
-        spent = sum(
-            transaction.amount
-            for transaction in expenses
-        )
-
+        spent = sum(t.amount for t in expenses)
         remaining = budget.amount - spent
-
-        if budget.amount > 0:
-            spent_percentage = round(
-                (spent / budget.amount) * 100,
-                2
-            )
-        else:
-            spent_percentage = 0
+        spent_percentage = round((spent / budget.amount) * 100, 2) if budget.amount > 0 else 0
 
         if remaining > 0:
             status = "on_track"
@@ -427,244 +300,123 @@ def get_dashboard_budgets(
             "spent": spent,
             "remaining": remaining,
             "spent_percentage": spent_percentage,
-            "status": status
+            "status": status,
         })
 
-    return {
-        "month": month,
-        "budgets": result
-    }
+    return {"month": month, "budgets": result}
 
-# =========================
-# READ ALL + FILTER
-# =========================
 
-@app.get(
-    "/transactions",
-    response_model=list[TransactionResponse]
-)
+@app.get("/transactions", response_model=list[TransactionResponse])
 def get_transactions(
     type: str | None = None,
     category: str | None = None,
     date: str | None = None,
     from_date: str | None = None,
     to_date: str | None = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     query = db.query(Transaction)
 
     if type is not None:
         query = query.filter(Transaction.type == type)
-
     if category is not None:
         query = query.filter(Transaction.category == category)
-
     if date is not None:
         start_date = datetime.strptime(date, "%Y-%m-%d")
-        end_date = datetime.strptime(date, "%Y-%m-%d").replace(
-            hour=23,
-            minute=59,
-            second=59
-        )
-
-        query = query.filter(
-            Transaction.created_at >= start_date,
-            Transaction.created_at <= end_date
-        )
-
+        end_date = start_date.replace(hour=23, minute=59, second=59)
+        query = query.filter(Transaction.created_at >= start_date, Transaction.created_at <= end_date)
     if from_date is not None:
-        start_date = datetime.strptime(from_date, "%Y-%m-%d")
-        query = query.filter(
-            Transaction.created_at >= start_date
-        )
-
+        query = query.filter(Transaction.created_at >= datetime.strptime(from_date, "%Y-%m-%d"))
     if to_date is not None:
-        end_date = datetime.strptime(to_date, "%Y-%m-%d").replace(
-            hour=23,
-            minute=59,
-            second=59
-        )
-
-        query = query.filter(
-            Transaction.created_at <= end_date
-        )
+        end_date = datetime.strptime(to_date, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
+        query = query.filter(Transaction.created_at <= end_date)
 
     return query.all()
 
 
-# =========================
-# SUMMARY
-# =========================
 @app.get("/transactions/summary")
 def get_transaction_summary(
     from_date: str | None = None,
     to_date: str | None = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     query = db.query(Transaction)
-
     if from_date is not None:
-        start_date = datetime.strptime(from_date, "%Y-%m-%d")
-        query = query.filter(
-            Transaction.created_at >= start_date
-        )
-
+        query = query.filter(Transaction.created_at >= datetime.strptime(from_date, "%Y-%m-%d"))
     if to_date is not None:
-        end_date = datetime.strptime(to_date, "%Y-%m-%d").replace(
-            hour=23,
-            minute=59,
-            second=59
-        )
-        query = query.filter(
-            Transaction.created_at <= end_date
-        )
+        end_date = datetime.strptime(to_date, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
+        query = query.filter(Transaction.created_at <= end_date)
 
     transactions = query.all()
-
-    total_income = sum(
-        transaction.amount
-        for transaction in transactions
-        if transaction.type == "income"
-    )
-
-    total_expense = sum(
-        transaction.amount
-        for transaction in transactions
-        if transaction.type == "expense"
-    )
-
-    balance = total_income - total_expense
+    total_income = sum(t.amount for t in transactions if t.type == "income")
+    total_expense = sum(t.amount for t in transactions if t.type == "expense")
 
     return {
         "total_income": total_income,
         "total_expense": total_expense,
-        "balance": balance,
-        "transaction_count": len(transactions)
+        "balance": total_income - total_expense,
+        "transaction_count": len(transactions),
     }
 
-# =========================
-# READ ONE
-# =========================
+
 @app.get("/transactions/expenses-by-category")
 def get_expenses_by_category(
     from_date: str | None = None,
     to_date: str | None = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    query = db.query(Transaction).filter(
-        Transaction.type == "expense"
-    )
-
+    query = db.query(Transaction).filter(Transaction.type == "expense")
     if from_date is not None:
-        start_date = datetime.strptime(from_date, "%Y-%m-%d")
-        query = query.filter(
-            Transaction.created_at >= start_date
-        )
-
+        query = query.filter(Transaction.created_at >= datetime.strptime(from_date, "%Y-%m-%d"))
     if to_date is not None:
-        end_date = datetime.strptime(to_date, "%Y-%m-%d").replace(
-            hour=23,
-            minute=59,
-            second=59
-        )
-        query = query.filter(
-            Transaction.created_at <= end_date
-        )
-
-    transactions = query.all()
+        end_date = datetime.strptime(to_date, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
+        query = query.filter(Transaction.created_at <= end_date)
 
     expenses_by_category = {}
-
-    for transaction in transactions:
-        category = transaction.category
-
-        if category not in expenses_by_category:
-            expenses_by_category[category] = 0
-
-        expenses_by_category[category] += transaction.amount
-
+    for transaction in query.all():
+        expenses_by_category[transaction.category] = expenses_by_category.get(transaction.category, 0) + transaction.amount
     return expenses_by_category
 
-@app.get(
-    "/transactions/{transaction_id}",
-    response_model=TransactionResponse
-)
+
+@app.get("/transactions/{transaction_id}", response_model=TransactionResponse)
 def get_transaction(
     transaction_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    transaction = (
-        db.query(Transaction)
-        .filter(Transaction.id == transaction_id)
-        .first()
-    )
-
+    transaction = db.query(Transaction).filter(Transaction.id == transaction_id).first()
     if transaction is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Transaction not found"
-        )
-
+        raise HTTPException(status_code=404, detail="Transaction not found")
     return transaction
 
-
-# =========================
-# UPDATE
-# =========================
 
 @app.put("/transactions/{transaction_id}")
 def update_transaction(
     transaction_id: int,
     transaction_data: TransactionCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    transaction = (
-        db.query(Transaction)
-        .filter(Transaction.id == transaction_id)
-        .first()
-    )
-
+    transaction = db.query(Transaction).filter(Transaction.id == transaction_id).first()
     if transaction is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Transaction not found"
-        )
+        raise HTTPException(status_code=404, detail="Transaction not found")
 
     transaction.title = transaction_data.title
     transaction.amount = transaction_data.amount
     transaction.type = transaction_data.type
     transaction.category = transaction_data.category
-
     db.commit()
     db.refresh(transaction)
-
     return transaction
 
-
-# =========================
-# DELETE
-# =========================
 
 @app.delete("/transactions/{transaction_id}")
 def delete_transaction(
     transaction_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    transaction = (
-        db.query(Transaction)
-        .filter(Transaction.id == transaction_id)
-        .first()
-    )
-
+    transaction = db.query(Transaction).filter(Transaction.id == transaction_id).first()
     if transaction is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Transaction not found"
-        )
+        raise HTTPException(status_code=404, detail="Transaction not found")
 
     db.delete(transaction)
     db.commit()
-
-    return {
-        "message": "Transaction deleted successfully"
-    }
+    return {"message": "Transaction deleted successfully"}
