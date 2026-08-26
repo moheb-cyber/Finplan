@@ -11,14 +11,12 @@
         if (!response.ok) throw new Error(await response.text());
         return response.json();
     };
-    const toast = message => window.showToast?.(message);
 
     function mount() {
         if ($("#authScreen")) return;
-        document.body.insertAdjacentHTML("afterbegin", `<section id="authScreen" class="auth-screen" hidden><div class="auth-glow"></div><div class="auth-card"><div class="auth-brand"><span>F</span><div><strong>FinPlan</strong><small>PERSONAL FINANCE</small></div></div><div class="auth-heading"><span class="panel-label" id="authEyebrow">WELCOME BACK</span><h1 id="authTitle">Sign in to FinPlan</h1><p id="authSubtitle">Your financial workspace, saved to your account.</p></div><form id="authForm"><div class="auth-field auth-name-field" hidden><label>Name<input name="name" maxlength="80" autocomplete="name"></label></div><div class="auth-field"><label>Email<input name="email" type="email" required autocomplete="email"></label></div><div class="auth-field"><label>Password<input name="password" type="password" minlength="8" required autocomplete="current-password"></label></div><button class="primary-button auth-submit" type="submit" id="authSubmit">Sign in</button></form><button class="auth-switch" type="button" id="authSwitch">Create an account</button><button class="auth-demo" type="button" id="authDemo">Continue with existing local data</button><div class="auth-error" id="authError" role="alert"></div></div></section>`);
+        document.body.insertAdjacentHTML("afterbegin", `<section id="authScreen" class="auth-screen" hidden><div class="auth-glow"></div><div class="auth-card"><div class="auth-brand"><span>F</span><div><strong>FinPlan</strong><small>PERSONAL FINANCE</small></div></div><div class="auth-heading"><span class="panel-label" id="authEyebrow">WELCOME BACK</span><h1 id="authTitle">Sign in to FinPlan</h1><p id="authSubtitle">Your financial workspace, saved to your account.</p></div><form id="authForm"><div class="auth-field auth-name-field" hidden><label>Name<input name="name" maxlength="80" autocomplete="name"></label></div><div class="auth-field"><label>Email<input name="email" type="email" required autocomplete="email"></label></div><div class="auth-field"><label>Password<input name="password" type="password" minlength="8" required autocomplete="current-password"></label></div><button class="primary-button auth-submit" type="submit" id="authSubmit">Sign in</button></form><button class="auth-switch" type="button" id="authSwitch">Create an account</button><div class="auth-error" id="authError" role="alert"></div></div></section>`);
         $("#authForm").addEventListener("submit", submit);
         $("#authSwitch").addEventListener("click", toggleMode);
-        $("#authDemo").addEventListener("click", continueDemo);
         updateMode(false);
     }
     let registerMode = false;
@@ -47,15 +45,18 @@
             await api("/auth/claim-legacy", { method: "POST" }).catch(() => null);
             enterApp(result.user);
         } catch (error) {
+            console.error("FinPlan auth error:", error);
             $("#authError").textContent = registerMode ? (fa() ? "ساخت حساب ناموفق بود. ایمیل را بررسی کن." : "Could not create the account. Check your email.") : (fa() ? "ایمیل یا رمز عبور اشتباه است." : "Invalid email or password.");
         }
     }
-    function continueDemo() { localStorage.setItem("finplan-demo-mode", "1"); enterApp({ name: "Moheb", email: "local@finplan" }); }
     function enterApp(user) {
         $("#authScreen").hidden = true;
         $(".app-shell").hidden = false;
         const profileName = $(".profile-info strong");
-        if (profileName) profileName.textContent = user?.name || "Moheb";
+        const welcomeName = $("#welcomeName");
+        const name = user?.name || "Moheb";
+        if (profileName) profileName.textContent = name;
+        if (welcomeName) welcomeName.textContent = name;
         window.dispatchEvent(new CustomEvent("finplan:authenticated", { detail: user }));
     }
     async function init() {
@@ -63,13 +64,15 @@
         const app = $(".app-shell");
         if (token()) {
             try { const user = await api("/auth/me"); localStorage.setItem("finplan-user", JSON.stringify(user)); enterApp(user); }
-            catch { localStorage.removeItem("finplan-token"); showAuth(); }
-        } else if (localStorage.getItem("finplan-demo-mode") === "1") enterApp({ name: "Moheb" });
-        else showAuth();
+            catch { localStorage.removeItem("finplan-token"); localStorage.removeItem("finplan-user"); showAuth(); }
+        } else showAuth();
         app.hidden = !$("#authScreen").hidden;
     }
     function showAuth() { $("#authScreen").hidden = false; $(".app-shell").hidden = true; }
-    window.finplanLogout = () => { localStorage.removeItem("finplan-token"); localStorage.removeItem("finplan-user"); localStorage.removeItem("finplan-demo-mode"); location.reload(); };
+    window.finplanLogout = () => { localStorage.removeItem("finplan-token"); localStorage.removeItem("finplan-user"); location.reload(); };
     window.addEventListener("finplan:language-change", () => { if ($("#authScreen") && !$("#authScreen").hidden) updateMode(registerMode); });
-    document.addEventListener("DOMContentLoaded", init);
+    document.addEventListener("DOMContentLoaded", () => {
+        $("#logoutButton")?.addEventListener("click", window.finplanLogout);
+        init();
+    });
 })();
