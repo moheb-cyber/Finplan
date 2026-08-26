@@ -31,30 +31,30 @@ const translations = {
     }
 };
 
-function t(key) {
-    return translations[currentLanguage]?.[key] || translations.en[key] || key;
-}
+function t(key) { return translations[currentLanguage]?.[key] || translations.en[key] || key; }
 
 async function apiFetch(path, options = {}) {
-    const response = await fetch(`${API_BASE}${path}`, {
-        ...options,
-        headers: { "Content-Type": "application/json", ...(options.headers || {}) }
-    });
+    const response = await fetch(`${API_BASE}${path}`, { ...options, headers: { "Content-Type": "application/json", ...(options.headers || {}) } });
     if (!response.ok) throw new Error(`API ${response.status}`);
     return response.json();
 }
 
 function formatMoney(value) {
     const amount = Number(value || 0);
-    if (currentCurrency === "USD") return `$${amount.toLocaleString("en-US")}`;
-    return `${amount.toLocaleString("fa-IR")} ﷼`;
+    return currentCurrency === "USD" ? `$${amount.toLocaleString("en-US")}` : `${amount.toLocaleString("fa-IR")} ﷼`;
 }
 
 function updateMonthLabel() {
     const [year, month] = currentMonth.split("-").map(Number);
     const label = document.querySelector("#monthLabel");
-    if (!label) return;
-    label.textContent = new Intl.DateTimeFormat(currentLanguage === "fa" ? "fa-IR" : "en-US", { month: "long", year: "numeric" }).format(new Date(year, month - 1, 1));
+    if (label) label.textContent = new Intl.DateTimeFormat(currentLanguage === "fa" ? "fa-IR" : "en-US", { month: "long", year: "numeric" }).format(new Date(year, month - 1, 1));
+}
+
+function updateGreeting() {
+    const hour = new Date().getHours();
+    const key = hour < 12 ? "goodMorning" : hour < 18 ? "goodAfternoon" : "goodEvening";
+    const greeting = document.querySelector("#greeting");
+    if (greeting) greeting.textContent = t(key);
 }
 
 function setLanguage(language) {
@@ -69,6 +69,8 @@ function setLanguage(language) {
     const button = document.querySelector("#languageSelector .language-current");
     if (button) button.textContent = currentLanguage.toUpperCase();
     updateMonthLabel();
+    updateGreeting();
+    window.dispatchEvent(new CustomEvent("finplan:language-change", { detail: currentLanguage }));
 }
 
 function setCurrency(currency) {
@@ -77,31 +79,26 @@ function setCurrency(currency) {
     const button = document.querySelector("#currencySelector .currency-current");
     if (button) button.textContent = currentCurrency;
     refreshDashboard();
+    window.dispatchEvent(new CustomEvent("finplan:currency-change", { detail: currentCurrency }));
 }
 
 function setDashboardValue(selector, value) {
-    document.querySelectorAll(`[data-dashboard="${selector}"]`).forEach(element => {
-        element.textContent = typeof value === "number" ? formatMoney(value) : value;
-    });
+    document.querySelectorAll(`[data-dashboard="${selector}"]`).forEach(element => { element.textContent = typeof value === "number" ? formatMoney(value) : value; });
 }
 
 async function refreshDashboard() {
     try {
         const data = await apiFetch(`/dashboard?month=${encodeURIComponent(currentMonth)}`);
-        setDashboardValue("income", data.income);
-        setDashboardValue("expense", data.expense);
-        setDashboardValue("balance", data.balance);
-        setDashboardValue("budget-total", data.total_budget);
-        setDashboardValue("budget-spent", data.budget_spent);
-        setDashboardValue("budget-remaining", data.budget_remaining);
-        setDashboardValue("budget-remaining-2", data.budget_remaining);
+        setDashboardValue("income", data.income); setDashboardValue("expense", data.expense); setDashboardValue("balance", data.balance);
+        setDashboardValue("budget-total", data.total_budget); setDashboardValue("budget-spent", data.budget_spent);
+        setDashboardValue("budget-remaining", data.budget_remaining); setDashboardValue("budget-remaining-2", data.budget_remaining);
         document.querySelectorAll('[data-dashboard="budget-percentage"]').forEach(el => el.textContent = `${data.budget_spent_percentage}%`);
         const progress = document.querySelector('[data-dashboard="progress"]');
         if (progress) progress.style.width = `${clamp(Number(data.budget_spent_percentage), 0, 100)}%`;
         const status = document.querySelector('[data-dashboard="budget-status"]');
         if (status) status.textContent = data.budget_status === "over_budget" ? (currentLanguage === "fa" ? "از بودجه عبور کرده‌ای" : "You're over budget") : data.budget_status === "no_budget" ? (currentLanguage === "fa" ? "برای این ماه بودجه‌ای ثبت نشده" : "No budget set for this month") : t("onTrack");
-        await loadRecentTransactions();
-        await loadBudgets();
+        await loadRecentTransactions(); await loadBudgets();
+        window.dispatchEvent(new CustomEvent("finplan:dashboard-refreshed", { detail: data }));
     } catch (error) {
         console.error("FinPlan dashboard error:", error);
         document.querySelectorAll(".loading-state").forEach(el => el.textContent = currentLanguage === "fa" ? "اتصال به API برقرار نشد" : "Could not connect to API");
@@ -109,87 +106,70 @@ async function refreshDashboard() {
 }
 
 async function loadRecentTransactions() {
-    const list = document.querySelector("#transactionsList");
-    if (!list) return;
+    const list = document.querySelector("#transactionsList"); if (!list) return;
     try {
         const items = await apiFetch(`/transactions?from_date=${currentMonth}-01&to_date=${currentMonth}-31`);
-        list.innerHTML = items.slice(0, 6).map(item => `
-            <div class="transaction-row">
-                <div><strong>${escapeHTML(item.title)}</strong><span>${escapeHTML(item.category)}</span></div>
-                <strong class="${item.type === "income" ? "positive" : "negative"}">${item.type === "income" ? "+" : "-"}${formatMoney(item.amount)}</strong>
-            </div>`).join("") || `<div class="empty-state">${currentLanguage === "fa" ? "تراکنشی برای این ماه نیست" : "No transactions this month"}</div>`;
-    } catch (error) { list.innerHTML = `<div class="empty-state">${currentLanguage === "fa" ? "خطا در دریافت تراکنش‌ها" : "Could not load transactions"}</div>`; }
+        list.innerHTML = items.slice(0, 6).map(item => `<div class="transaction-row"><div><strong>${escapeHTML(item.title)}</strong><span>${escapeHTML(item.category)}</span></div><strong class="${item.type === "income" ? "positive" : "negative"}">${item.type === "income" ? "+" : "-"}${formatMoney(item.amount)}</strong></div>`).join("") || `<div class="empty-state">${currentLanguage === "fa" ? "تراکنشی برای این ماه نیست" : "No transactions this month"}</div>`;
+    } catch { list.innerHTML = `<div class="empty-state">${currentLanguage === "fa" ? "خطا در دریافت تراکنش‌ها" : "Could not load transactions"}</div>`; }
 }
 
 async function loadBudgets() {
-    const list = document.querySelector("#budgetList");
-    if (!list) return;
+    const list = document.querySelector("#budgetList"); if (!list) return;
     try {
         const items = await apiFetch(`/budgets?month=${encodeURIComponent(currentMonth)}`);
         document.querySelector("#budgetCount")?.replaceChildren(document.createTextNode(`${items.length} ${currentLanguage === "fa" ? "دسته" : "categories"}`));
         list.innerHTML = items.map(item => `<div class="budget-row"><span>${escapeHTML(item.category)}</span><strong>${formatMoney(item.amount)}</strong></div>`).join("") || `<div class="empty-state">${currentLanguage === "fa" ? "بودجه‌ای ثبت نشده" : "No budgets set"}</div>`;
-    } catch (error) { list.innerHTML = `<div class="empty-state">${currentLanguage === "fa" ? "خطا در دریافت بودجه‌ها" : "Could not load budgets"}</div>`; }
+    } catch { list.innerHTML = `<div class="empty-state">${currentLanguage === "fa" ? "خطا در دریافت بودجه‌ها" : "Could not load budgets"}</div>`; }
+}
+
+function showWorkspace(section) {
+    const dashboardParts = [".dashboard-grid", ".summary-grid", ".budget-list-panel", ".transactions-panel"];
+    if (section === "dashboard") {
+        dashboardParts.forEach(selector => document.querySelector(selector)?.removeAttribute("hidden"));
+        const workspace = document.querySelector("#transactionsWorkspace");
+        if (workspace) { workspace.classList.remove("visible"); workspace.hidden = true; workspace.innerHTML = ""; delete workspace.dataset.workspace; }
+    } else {
+        dashboardParts.forEach(selector => document.querySelector(selector)?.setAttribute("hidden", "true"));
+        window.dispatchEvent(new CustomEvent("finplan:workspace", { detail: section }));
+    }
 }
 
 function setupControls() {
     document.querySelector("#languageSelector")?.addEventListener("click", () => setLanguage(currentLanguage === "en" ? "fa" : "en"));
     document.querySelector("#currencySelector")?.addEventListener("click", () => setCurrency(currentCurrency === "USD" ? "IRR" : "USD"));
     document.querySelector("#monthSelector")?.addEventListener("click", async () => {
-        const next = window.prompt(t("monthPrompt"), currentMonth);
-        if (!next) return;
+        const next = window.prompt(t("monthPrompt"), currentMonth); if (!next) return;
         if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(next)) return showToast(t("invalidMonth"));
         currentMonth = next; localStorage.setItem("finplan-month", currentMonth); updateMonthLabel(); await refreshDashboard();
+        window.dispatchEvent(new CustomEvent("finplan:month-change", { detail: currentMonth }));
     });
     document.querySelector("#addTransactionButton")?.addEventListener("click", addTransactionPrompt);
     document.querySelector("#notificationButton")?.addEventListener("click", () => showToast(t("noNotifications")));
     document.querySelector("#viewTransactionsButton")?.addEventListener("click", () => document.querySelector('.nav-item[data-section="transactions"]')?.click());
     document.querySelector("#viewBudgetsButton")?.addEventListener("click", () => document.querySelector('.nav-item[data-section="budgets"]')?.click());
-
     document.querySelectorAll(".nav-item[data-section]").forEach(item => item.addEventListener("click", event => {
         event.preventDefault();
-        document.querySelectorAll(".nav-item[data-section]").forEach(nav => nav.classList.remove("active"));
-        item.classList.add("active");
+        document.querySelectorAll(".nav-item[data-section]").forEach(nav => nav.classList.remove("active")); item.classList.add("active");
         const section = item.dataset.section;
-        const dashboardParts = [".dashboard-grid", ".summary-grid", ".budget-list-panel", ".transactions-panel"];
-        if (section === "dashboard") {
-            dashboardParts.forEach(selector => document.querySelector(selector)?.removeAttribute("hidden"));
-            document.querySelector("#transactionsWorkspace")?.classList.remove("visible");
-        } else if (section === "transactions") {
-            dashboardParts.forEach(selector => document.querySelector(selector)?.setAttribute("hidden", "true"));
-            document.querySelector("#transactionsWorkspace")?.classList.add("visible");
-            window.dispatchEvent(new CustomEvent("finplan:transactions-open"));
-        } else {
-            showToast(currentLanguage === "fa" ? `${t(section)} ${t("next")}` : `${section[0].toUpperCase() + section.slice(1)} ${t("next")}`);
-        }
+        if (section === "settings") { showToast(currentLanguage === "fa" ? "تنظیمات در نسخه بعدی" : "Settings are planned for the next version"); return; }
+        showWorkspace(section);
+        if (section === "transactions") window.dispatchEvent(new CustomEvent("finplan:transactions-open"));
     }));
 }
 
 async function addTransactionPrompt() {
-    const title = window.prompt(currentLanguage === "fa" ? "عنوان تراکنش" : "Transaction title");
-    if (!title?.trim()) return;
-    const amount = Number(window.prompt(currentLanguage === "fa" ? "مبلغ" : "Amount", "100000"));
-    if (!Number.isFinite(amount) || amount <= 0) return;
-    const type = window.prompt(currentLanguage === "fa" ? "نوع: income یا expense" : "Type: income or expense", "expense")?.toLowerCase();
-    if (!['income', 'expense'].includes(type)) return;
-    const category = window.prompt(currentLanguage === "fa" ? "دسته‌بندی" : "Category", "General");
-    if (!category?.trim()) return;
-    try {
-        await apiFetch("/transactions", { method: "POST", body: JSON.stringify({ title: title.trim(), amount: Math.round(amount), type, category: category.trim() }) });
-        showToast(t("transactionAdded")); await refreshDashboard(); window.dispatchEvent(new CustomEvent("finplan:transactions-refresh"));
-    } catch (error) { console.error(error); showToast(t("transactionFailed")); }
+    const title = window.prompt(currentLanguage === "fa" ? "عنوان تراکنش" : "Transaction title"); if (!title?.trim()) return;
+    const amount = Number(window.prompt(currentLanguage === "fa" ? "مبلغ" : "Amount", "100000")); if (!Number.isFinite(amount) || amount <= 0) return;
+    const type = window.prompt(currentLanguage === "fa" ? "نوع: income یا expense" : "Type: income or expense", "expense")?.toLowerCase(); if (!['income', 'expense'].includes(type)) return;
+    const category = window.prompt(currentLanguage === "fa" ? "دسته‌بندی" : "Category", "General"); if (!category?.trim()) return;
+    try { await apiFetch("/transactions", { method: "POST", body: JSON.stringify({ title: title.trim(), amount: Math.round(amount), type, category: category.trim() }) }); showToast(t("transactionAdded")); await refreshDashboard(); window.dispatchEvent(new CustomEvent("finplan:transactions-refresh")); }
+    catch (error) { console.error(error); showToast(t("transactionFailed")); }
 }
 
-function showToast(message) {
-    const toast = document.querySelector("#toast");
-    if (!toast) return;
-    toast.textContent = message; toast.classList.add("show"); clearTimeout(showToast.timer); showToast.timer = setTimeout(() => toast.classList.remove("show"), 2600);
-}
-
+function showToast(message) { const toast = document.querySelector("#toast"); if (!toast) return; toast.textContent = message; toast.classList.add("show"); clearTimeout(showToast.timer); showToast.timer = setTimeout(() => toast.classList.remove("show"), 2600); }
 function clamp(value, min, max) { return Math.min(Math.max(value, min), max); }
 function escapeHTML(value) { return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;"); }
 
-async function initFinPlan() {
-    setupControls(); setLanguage(currentLanguage); updateMonthLabel(); await refreshDashboard();
-}
+async function initFinPlan() { setupControls(); setLanguage(currentLanguage); updateMonthLabel(); updateGreeting(); await refreshDashboard(); }
 
 document.addEventListener("DOMContentLoaded", initFinPlan);
