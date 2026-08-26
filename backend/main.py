@@ -1,8 +1,11 @@
 from datetime import datetime
+from pathlib import Path
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
-from backend.database import Base, engine, SessionLocal, ensure_schema
+from backend.database import SessionLocal, ensure_schema
 from backend.models import Transaction, Budget
 from backend.schemas import TransactionCreate, TransactionResponse, BudgetCreate, BudgetResponse, BudgetUpdate, DashboardResponse, validate_month_format
 from backend.auth_router import router as auth_router, current_user
@@ -11,6 +14,15 @@ ensure_schema()
 app = FastAPI(title="FinPlan API", description="Personal financial planning API")
 app.add_middleware(CORSMiddleware, allow_origins=["http://127.0.0.1:5500", "http://localhost:5500"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 app.include_router(auth_router)
+
+FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
+app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
+
+@app.get("/app", include_in_schema=False)
+def serve_app(): return FileResponse(FRONTEND_DIR / "index.html")
+
+@app.get("/", include_in_schema=False)
+def root(): return FileResponse(FRONTEND_DIR / "index.html")
 
 def get_month_range(month: str):
     start=datetime.strptime(month+"-01","%Y-%m-%d"); end=start.replace(year=start.year+1,month=1) if start.month==12 else start.replace(month=start.month+1); return start,end
@@ -22,8 +34,8 @@ def get_db():
     finally: db.close()
 def uid(user): return int(user.id)
 
-@app.get("/")
-def root(): return {"message":"FinPlan API is running"}
+def require_owner(user, item):
+    if item.user_id != uid(user): raise HTTPException(404, "Resource not found")
 
 @app.post("/transactions",response_model=TransactionResponse)
 def create_transaction(data:TransactionCreate,db:Session=Depends(get_db),user=Depends(current_user)):
@@ -52,7 +64,7 @@ def delete_transaction(transaction_id:int,db:Session=Depends(get_db),user=Depend
     if not item:raise HTTPException(404,"Transaction not found")
     db.delete(item);db.commit();return {"message":"Transaction deleted successfully"}
 
-@app.post("/budgets",response_model=BudgetResponse)
+@app.post("/budgets", response_model=BudgetResponse)
 def create_budget(data:BudgetCreate,db:Session=Depends(get_db),user=Depends(current_user)):
     if db.query(Budget).filter(Budget.user_id==uid(user),Budget.category==data.category,Budget.month==data.month).first():raise HTTPException(400,"Budget already exists for this category and month")
     item=Budget(user_id=uid(user),category=data.category,amount=data.amount,month=data.month);db.add(item);db.commit();db.refresh(item);return item
