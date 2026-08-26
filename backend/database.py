@@ -24,7 +24,7 @@ Base = declarative_base()
 
 
 def ensure_schema() -> None:
-    """Create tables and safely migrate nullable auth columns in old SQLite DBs."""
+    """Create tables and safely add auth columns to an existing SQLite DB."""
     Base.metadata.create_all(bind=engine)
     inspector = inspect(engine)
     migrations = {
@@ -37,6 +37,3 @@ def ensure_schema() -> None:
             for name, definition in columns:
                 if name not in existing:
                     connection.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {definition}"))
-
-
-ensure_schema()
