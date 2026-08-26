@@ -8,14 +8,12 @@
     <title>FinPlan — Personal Finance</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="polish.css">
+    <link rel="stylesheet" href="v1-ui.css">
 </head>
 <body>
     <div class="app-shell">
         <aside class="sidebar">
-            <div class="brand">
-                <div class="brand-mark" aria-hidden="true">F</div>
-                <div class="brand-copy"><strong>FinPlan</strong><span data-i18n="personalFinance">PERSONAL FINANCE</span></div>
-            </div>
+            <div class="brand"><div class="brand-mark" aria-hidden="true">F</div><div class="brand-copy"><strong>FinPlan</strong><span data-i18n="personalFinance">PERSONAL FINANCE</span></div></div>
             <nav class="navigation" aria-label="Primary navigation">
                 <a href="#" class="nav-item active" data-section="dashboard"><span class="nav-icon" aria-hidden="true">⌂</span><span data-i18n="dashboard">Dashboard</span></a>
                 <a href="#" class="nav-item" data-section="transactions"><span class="nav-icon" aria-hidden="true">↕</span><span data-i18n="transactions">Transactions</span></a>
@@ -34,6 +32,6 @@
             <section id="transactionsWorkspace" class="transactions-workspace" hidden aria-live="polite"></section><div class="toast" id="toast" role="status" aria-live="polite"></div>
         </main>
     </div>
-    <script src="script.js"></script><script src="transactions-view.js"></script><script src="workspaces.js"></script>
+    <script src="script.js"></script><script src="transactions-view.js"></script><script src="workspaces.js"></script><script src="v1-ui.js"></script>
 </body>
 </html>
