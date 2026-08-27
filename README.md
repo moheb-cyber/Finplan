@@ -2,21 +2,27 @@
 
 A personal finance decision and planning platform focused on turning everyday financial data into clear, practical insights.
 
-## Status
+## Version 1
 
-🚧 In active development.
+FinPlan v1 provides authenticated personal finance tracking with real backend persistence, transaction and budget CRUD, dashboard summaries, analytics, settings, bilingual UI, and currency display preferences.
 
 ## Features
 
+- Secure account registration and sign-in
+- Token-based authentication with configurable secret and expiration
+- Password hashing with salted PBKDF2-HMAC-SHA256
 - Track income and expenses
-- Organize financial transactions by category
-- Filter and search transaction history
+- Create, update and delete transactions
+- Filter transaction history by type, category and date range
 - Create, update and delete monthly budgets
+- Prevent duplicate budgets for the same category and month
 - View dashboard income, expenses, balance and budget usage
-- Review spending by category
+- Review spending by category and transaction summaries
 - Switch between English and Persian UI
 - Switch between USD and IRR display
 - Navigate between months
+- Persistent SQLite storage for local development
+- Automated backend tests in GitHub Actions
 
 ## Tech Stack
 
@@ -25,21 +31,32 @@ A personal finance decision and planning platform focused on turning everyday fi
 - FastAPI
 - SQLAlchemy
 - SQLite
+- Pytest
+- GitHub Actions
 
 ## Project Structure
 
 ```text
 Finplan/
 ├── backend/
+│   ├── auth.py
+│   ├── auth_models.py
+│   ├── auth_router.py
+│   ├── auth_store.py
 │   ├── database.py
 │   ├── main.py
 │   ├── models.py
-│   └── schemas.py
+│   ├── schemas.py
+│   └── tests/
 ├── frontend/
 │   ├── index.html
 │   ├── style.css
 │   ├── script.js
-│   └── transactions-view.js
+│   ├── transactions-view.js
+│   └── settings-v1.js
+├── data/
+├── .env.example
+├── .gitignore
 ├── requirements.txt
 └── README.md
 ```
@@ -55,7 +72,7 @@ python -m venv .venv
 Windows PowerShell:
 
 ```powershell
-.\.venv\Scripts\Activate.ps1
+.\\.venv\\Scripts\\Activate.ps1
 ```
 
 ### 2. Install dependencies
@@ -64,17 +81,44 @@ Windows PowerShell:
 pip install -r requirements.txt
 ```
 
-### 3. Start the API
+### 3. Configure environment variables
+
+Copy `.env.example` to `.env` and replace `FINPLAN_AUTH_SECRET` with a long random secret.
+
+The `.env` file is ignored by Git and must never be committed.
+
+### 4. Start the application
 
 ```bash
 uvicorn backend.main:app --reload --port 8000
 ```
 
-### 4. Start the frontend
+Open:
 
-Serve the `frontend` directory with a local static server on port `5500`, then open the frontend in your browser.
+```text
+http://127.0.0.1:8000
+```
 
-The frontend currently expects the API at `http://127.0.0.1:8000`.
+The FastAPI application serves the frontend and API from the same origin in local development.
+
+## Testing
+
+Run the complete backend test suite with:
+
+```bash
+pytest -q
+```
+
+CI runs the same test suite automatically on pushes and pull requests targeting `master`.
+
+## Security Notes
+
+- Authentication secrets are supplied through environment variables.
+- Local `.env` files and SQLite databases are excluded from Git.
+- Passwords are never stored in plaintext.
+- Authentication tokens are signed and expire after a configurable period.
+- API queries are scoped to the authenticated user's records.
+- CORS is restricted to the configured frontend origin.
 
 ## About
 
