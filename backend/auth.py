@@ -4,6 +4,12 @@ from hashlib import pbkdf2_hmac
 import base64
 import hmac
 import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+load_dotenv(PROJECT_ROOT / ".env")
 
 SECRET_VALUE = os.getenv("FINPLAN_AUTH_SECRET")
 if not SECRET_VALUE:
