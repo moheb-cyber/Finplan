@@ -1,11 +1,57 @@
-/* FinPlan v1 — final UI interactions */
+/* FinPlan v1 — UI polish, settings and session controls */
 (() => {
- const $=(s,r=document)=>r.querySelector(s),fa=()=>document.documentElement.lang==="fa",token=()=>localStorage.getItem("finplan-token");
- function addModal(){if($("#transactionModal"))return;document.body.insertAdjacentHTML("beforeend",`<div class="v1-modal" id="transactionModal" hidden><div class="v1-modal-backdrop" data-close-modal></div><section class="v1-modal-card" role="dialog" aria-modal="true"><button class="v1-modal-close" type="button" data-close-modal>×</button><span class="panel-label">${fa()?"تراکنش":"TRANSACTION"}</span><h2>${fa()?"افزودن تراکنش":"Add transaction"}</h2><form id="transactionForm" class="v1-form"><label>${fa()?"عنوان":"Title"}<input name="title" required maxlength="80"></label><label>${fa()?"مبلغ":"Amount"}<input name="amount" type="number" min="1" step="1" required></label><div class="v1-form-grid"><label>${fa()?"نوع":"Type"}<select name="type"><option value="expense">${fa()?"هزینه":"Expense"}</option><option value="income">${fa()?"درآمد":"Income"}</option></select></label><label>${fa()?"دسته‌بندی":"Category"}<input name="category" required maxlength="40" value="General"></label></div><label>${fa()?"تاریخ":"Date"}<input name="date" type="date" value="${new Date().toISOString().slice(0,10)}"></label><div class="v1-form-actions"><button type="button" class="panel-button" data-close-modal>${fa()?"انصراف":"Cancel"}</button><button class="primary-button" type="submit">${fa()?"ثبت تراکنش":"Add transaction"}</button></div></form></section></div>`);$("#transactionModal").querySelectorAll("[data-close-modal]").forEach(e=>e.addEventListener("click",closeModal));$("#transactionForm").addEventListener("submit",submit)}
- function openModal(){addModal();$("#transactionModal").hidden=false;$("#transactionForm input[name=title]")?.focus()}function closeModal(){$("#transactionModal")?.setAttribute("hidden","true")}
- async function submit(e){e.preventDefault();if(!token()){window.dispatchEvent(new CustomEvent("finplan:auth-required"));return}const d=new FormData(e.currentTarget),payload={title:String(d.get("title")||"").trim(),amount:Math.round(Number(d.get("amount"))),type:d.get("type"),category:String(d.get("category")||"").trim()};if(!payload.title||!payload.category||!Number.isFinite(payload.amount)||payload.amount<=0)return;try{const r=await fetch("/transactions",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token()}`},body:JSON.stringify(payload)});if(r.status===401){window.dispatchEvent(new CustomEvent("finplan:auth-required"));return}if(!r.ok)throw new Error(`API ${r.status}`);closeModal();e.currentTarget.reset();window.showToast?.(fa()?"تراکنش با موفقیت ثبت شد.":"Transaction added successfully.");await window.refreshDashboard?.();window.dispatchEvent(new CustomEvent("finplan:transactions-refresh"))}catch(err){console.error(err);window.showToast?.(fa()?"ثبت تراکنش ناموفق بود.":"Could not add transaction.")}}
- function settings(){const r=$("#transactionsWorkspace");if(!r)return;r.hidden=false;r.classList.add("visible");r.dataset.workspace="settings";const theme=localStorage.getItem("finplan-theme")||"dark";r.innerHTML=`<div class="workspace-header"><div><span class="panel-label">${fa()?"تنظیمات":"SETTINGS"}</span><h2>${fa()?"تنظیمات FinPlan":"FinPlan settings"}</h2></div></div><div class="settings-grid"><article class="workspace-card settings-card"><div><span class="panel-label">${fa()?"ظاهر":"APPEARANCE"}</span><h3>${fa()?"تم رابط کاربری":"Interface theme"}</h3><p>${fa()?"ظاهر برنامه را انتخاب کن.":"Choose how FinPlan looks."}</p></div><div class="settings-choice"><button class="settings-option ${theme==="dark"?"active":""}" data-theme="dark">${fa()?"تیره":"Dark"}</button><button class="settings-option ${theme==="light"?"active":""}" data-theme="light">${fa()?"روشن":"Light"}</button></div></article></div>`;r.querySelectorAll("[data-theme]").forEach(b=>b.onclick=()=>{localStorage.setItem("finplan-theme",b.dataset.theme);document.documentElement.dataset.theme=b.dataset.theme;settings()})}
- function profile(){const p=$(".profile"),u=(()=>{try{return JSON.parse(localStorage.getItem("finplan-user")||"null")}catch{return null}})();if(p)p.innerHTML=`<div class="profile-info"><strong>${String(u?.name||"Moheb").replace(/[<>]/g,"")}</strong><span>${fa()?"حساب شخصی":"Personal account"}</span></div>`}
- function wire(){addModal();const a=$("#addTransactionButton");if(a){const n=a.cloneNode(true);a.replaceWith(n);n.onclick=openModal}profile();const s=$(".nav-item[data-section=\"settings\"]");if(s){const n=s.cloneNode(true);s.replaceWith(n);n.onclick=e=>{e.preventDefault();settings()}}const l=$("#logoutButton");if(l){const n=l.cloneNode(true);l.replaceWith(n);n.onclick=()=>{localStorage.removeItem("finplan-token");localStorage.removeItem("finplan-user");location.reload()}}}
- document.addEventListener("DOMContentLoaded",wire);
+    const $ = (s, r = document) => r.querySelector(s);
+    const fa = () => document.documentElement.lang === "fa";
+    const userName = () => { try { return JSON.parse(localStorage.getItem("finplan-user") || "null")?.name || "Moheb"; } catch { return "Moheb"; } };
+    const safe = value => String(value).replace(/[<>]/g, "");
+
+    function profile() {
+        const p = $(".profile");
+        if (!p) return;
+        p.innerHTML = `<div class="profile-info"><strong>${safe(userName())}</strong><span>${fa() ? "حساب شخصی" : "Personal account"}</span></div>`;
+    }
+
+    function settings() {
+        const root = $("#transactionsWorkspace");
+        if (!root) return;
+        root.hidden = false;
+        root.classList.add("visible");
+        root.dataset.workspace = "settings";
+        const theme = localStorage.getItem("finplan-theme") === "light" ? "light" : "dark";
+        root.innerHTML = `<div class="workspace-header"><div><span class="panel-label">${fa() ? "تنظیمات" : "SETTINGS"}</span><h2>${fa() ? "تنظیمات FinPlan" : "FinPlan settings"}</h2></div></div><div class="settings-grid"><article class="workspace-card settings-card"><div><span class="panel-label">${fa() ? "ظاهر" : "APPEARANCE"}</span><h3>${fa() ? "تم رابط کاربری" : "Interface theme"}</h3><p>${fa() ? "ظاهر برنامه را انتخاب کن." : "Choose how FinPlan looks."}</p></div><div class="settings-choice"><button type="button" class="settings-option ${theme === "dark" ? "active" : ""}" data-theme="dark">${fa() ? "تیره" : "Dark"}</button><button type="button" class="settings-option ${theme === "light" ? "active" : ""}" data-theme="light">${fa() ? "روشن" : "Light"}</button></div></article></div>`;
+        root.querySelectorAll("[data-theme]").forEach(button => button.addEventListener("click", () => {
+            const value = button.dataset.theme === "light" ? "light" : "dark";
+            localStorage.setItem("finplan-theme", value);
+            document.documentElement.dataset.theme = value;
+            settings();
+        }));
+    }
+
+    function logout() {
+        localStorage.removeItem("finplan-token");
+        localStorage.removeItem("finplan-user");
+        sessionStorage.clear();
+        window.finplanLogout?.();
+        if (localStorage.getItem("finplan-token")) localStorage.removeItem("finplan-token");
+        if (localStorage.getItem("finplan-user")) localStorage.removeItem("finplan-user");
+        window.location.reload();
+    }
+
+    function wire() {
+        profile();
+        document.documentElement.dataset.theme = localStorage.getItem("finplan-theme") === "light" ? "light" : "dark";
+        const logoutButton = $("#logoutButton");
+        if (logoutButton) logoutButton.onclick = logout;
+        const settingsButton = $(".nav-item[data-section='settings']");
+        if (settingsButton) settingsButton.onclick = event => {
+            event.preventDefault();
+            document.querySelectorAll(".nav-item[data-section]").forEach(n => n.classList.remove("active"));
+            settingsButton.classList.add("active");
+            [".dashboard-grid", ".summary-grid", ".budget-list-panel", ".transactions-panel"].forEach(s => $(s)?.setAttribute("hidden", "true"));
+            settings();
+        };
+    }
+
+    document.addEventListener("DOMContentLoaded", wire);
+    window.addEventListener("finplan:language-change", profile);
 })();
