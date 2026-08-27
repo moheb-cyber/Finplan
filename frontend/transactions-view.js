@@ -13,5 +13,6 @@
     async function remove(id){if(!await confirmDelete())return;try{await api(`/transactions/${id}`,{method:"DELETE"});toast(text("deleted"));await load();await window.refreshDashboard?.()}catch(error){console.error(error);toast(text("failed"))}}
     async function load(){if(!localStorage.getItem("finplan-token")){render();return}try{cache=await api("/transactions");render()}catch(error){console.error("FinPlan transactions:",error);const r=root();if(r)r.innerHTML=`<div class="empty-state">${text("failed")}</div>`}}
     function open(){const r=root();if(!r)return;r.hidden=false;r.classList.add("visible");r.dataset.workspace="transactions";load()}
+    window.openTransactionsWorkspace=open;
     window.addEventListener("finplan:transactions-open",open);window.addEventListener("finplan:transactions-refresh",load);window.addEventListener("finplan:workspace",e=>{if(e.detail==="transactions")open()});window.addEventListener("finplan:language-change",()=>{if(root()?.dataset.workspace==="transactions")render()});document.addEventListener("DOMContentLoaded",()=>{$("#addTransactionButton")?.addEventListener("click",openForm)});
 })();
