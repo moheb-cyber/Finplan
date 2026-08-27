@@ -5,7 +5,10 @@ import base64
 import hmac
 import os
 
-SECRET = os.getenv("FINPLAN_AUTH_SECRET", "finplan-dev-secret-change-me").encode()
+SECRET_VALUE = os.getenv("FINPLAN_AUTH_SECRET")
+if not SECRET_VALUE:
+    raise RuntimeError("FINPLAN_AUTH_SECRET must be set in the environment")
+SECRET = SECRET_VALUE.encode()
 TOKEN_TTL_HOURS = int(os.getenv("FINPLAN_TOKEN_TTL_HOURS", "24"))
 
 
