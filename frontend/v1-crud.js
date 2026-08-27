@@ -18,12 +18,9 @@
         $("#v1CrudModal").querySelectorAll("[data-close]").forEach(e => e.onclick = () => $("#v1CrudModal")?.remove());
     }
 
-    async function submit(event) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        const form = event.currentTarget;
-        const kind = form.dataset.kind;
+    async function submit(form) {
         const data = new FormData(form);
+        const kind = form.dataset.kind;
         const error = $("#v1CrudError");
         if (!token()) { window.dispatchEvent(new CustomEvent("finplan:auth-required")); return; }
         const amount = Number(data.get("amount"));
@@ -49,6 +46,12 @@
         event.preventDefault(); event.stopImmediatePropagation();
         openModal(button.id === "addBudgetButton" ? "budget" : "transaction");
     }, true);
-    document.addEventListener("submit", event => { if (event.target.matches("#v1CrudForm")) submit(event); }, true);
+    document.addEventListener("submit", event => {
+        const form = event.target.closest("#v1CrudForm");
+        if (!form) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        submit(form);
+    }, true);
     document.addEventListener("keydown", event => { if (event.key === "Escape") $("#v1CrudModal")?.remove(); });
 })();
