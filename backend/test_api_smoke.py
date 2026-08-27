@@ -10,7 +10,8 @@ def test_root_endpoint():
     response = client.get("/")
 
     assert response.status_code == 200
-    assert response.json() == {"message": "FinPlan API is running"}
+    assert "text/html" in response.headers["content-type"]
+    assert "FinPlan" in response.text
 
 
 def test_dashboard_requires_valid_month():
