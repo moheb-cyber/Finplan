@@ -50,6 +50,17 @@ def parse_date_filter(value: str | None, field: str) -> datetime | None:
     except ValueError:
         raise HTTPException(status_code=422, detail=f"{field} must be in YYYY-MM-DD format")
 
+def apply_date_range(q, from_date: str | None, to_date: str | None):
+    start = parse_date_filter(from_date, "from_date") if from_date else None
+    end = parse_date_filter(to_date, "to_date") if to_date else None
+    if start and end and start > end:
+        raise HTTPException(status_code=422, detail="from_date must be on or before to_date")
+    if start:
+        q = q.filter(Transaction.created_at >= start)
+    if end:
+        q = q.filter(Transaction.created_at <= end.replace(hour=23, minute=59, second=59))
+    return q
+
 def get_db():
     db = SessionLocal()
     try:
@@ -72,10 +83,7 @@ def get_transactions(type: str | None = None, category: str | None = None, date:
     if category: q = q.filter(Transaction.category == category)
     if date:
         s = parse_date_filter(date, "date"); q = q.filter(Transaction.created_at >= s, Transaction.created_at <= s.replace(hour=23, minute=59, second=59))
-    if from_date:
-        s = parse_date_filter(from_date, "from_date"); q = q.filter(Transaction.created_at >= s)
-    if to_date:
-        e = parse_date_filter(to_date, "to_date"); q = q.filter(Transaction.created_at <= e.replace(hour=23, minute=59, second=59))
+    q = apply_date_range(q, from_date, to_date)
     return q.order_by(Transaction.created_at.desc()).all()
 
 @app.put("/transactions/{transaction_id}", response_model=TransactionResponse)
@@ -142,20 +150,14 @@ def dashboard_budgets(month: str = Depends(validate_month_query), db: Session = 
 @app.get("/transactions/summary")
 def transaction_summary(from_date: str | None = None, to_date: str | None = None, db: Session = Depends(get_db), user=Depends(current_user)):
     q = db.query(Transaction).filter(Transaction.user_id == uid(user))
-    if from_date:
-        s = parse_date_filter(from_date, "from_date"); q = q.filter(Transaction.created_at >= s)
-    if to_date:
-        e = parse_date_filter(to_date, "to_date"); q = q.filter(Transaction.created_at <= e.replace(hour=23, minute=59, second=59))
+    q = apply_date_range(q, from_date, to_date)
     ts = q.all(); i = sum(t.amount for t in ts if t.type == "income"); e = sum(t.amount for t in ts if t.type == "expense")
     return {"total_income": i, "total_expense": e, "balance": i - e, "transaction_count": len(ts)}
 
 @app.get("/transactions/expenses-by-category")
 def expenses_by_category(from_date: str | None = None, to_date: str | None = None, db: Session = Depends(get_db), user=Depends(current_user)):
     q = db.query(Transaction).filter(Transaction.user_id == uid(user), Transaction.type == "expense")
-    if from_date:
-        s = parse_date_filter(from_date, "from_date"); q = q.filter(Transaction.created_at >= s)
-    if to_date:
-        e = parse_date_filter(to_date, "to_date"); q = q.filter(Transaction.created_at <= e.replace(hour=23, minute=59, second=59))
+    q = apply_date_range(q, from_date, to_date)
     out = {}
     for t in q.all(): out[t.category] = out.get(t.category, 0) + t.amount
     return out
