@@ -42,6 +42,14 @@ def get_month_range(month: str):
 def validate_month_query(month: str) -> str:
     return validate_month_format(month)
 
+def parse_date_filter(value: str | None, field: str) -> datetime | None:
+    if value is None:
+        return None
+    try:
+        return datetime.strptime(value, "%Y-%m-%d")
+    except ValueError:
+        raise HTTPException(status_code=422, detail=f"{field} must be in YYYY-MM-DD format")
+
 def get_db():
     db = SessionLocal()
     try:
@@ -59,12 +67,15 @@ def create_transaction(data: TransactionCreate, db: Session = Depends(get_db), u
 @app.get("/transactions", response_model=list[TransactionResponse])
 def get_transactions(type: str | None = None, category: str | None = None, date: str | None = None, from_date: str | None = None, to_date: str | None = None, db: Session = Depends(get_db), user=Depends(current_user)):
     q = db.query(Transaction).filter(Transaction.user_id == uid(user))
+    if type and type not in {"income", "expense"}: raise HTTPException(422, "type must be income or expense")
     if type: q = q.filter(Transaction.type == type)
     if category: q = q.filter(Transaction.category == category)
     if date:
-        s = datetime.strptime(date, "%Y-%m-%d"); q = q.filter(Transaction.created_at >= s, Transaction.created_at <= s.replace(hour=23, minute=59, second=59))
-    if from_date: q = q.filter(Transaction.created_at >= datetime.strptime(from_date, "%Y-%m-%d"))
-    if to_date: q = q.filter(Transaction.created_at <= datetime.strptime(to_date, "%Y-%m-%d").replace(hour=23, minute=59, second=59))
+        s = parse_date_filter(date, "date"); q = q.filter(Transaction.created_at >= s, Transaction.created_at <= s.replace(hour=23, minute=59, second=59))
+    if from_date:
+        s = parse_date_filter(from_date, "from_date"); q = q.filter(Transaction.created_at >= s)
+    if to_date:
+        e = parse_date_filter(to_date, "to_date"); q = q.filter(Transaction.created_at <= e.replace(hour=23, minute=59, second=59))
     return q.order_by(Transaction.created_at.desc()).all()
 
 @app.put("/transactions/{transaction_id}", response_model=TransactionResponse)
@@ -83,20 +94,23 @@ def delete_transaction(transaction_id: int, db: Session = Depends(get_db), user=
 @app.post("/budgets", response_model=BudgetResponse)
 def create_budget(data: BudgetCreate, db: Session = Depends(get_db), user=Depends(current_user)):
     if db.query(Budget).filter(Budget.user_id == uid(user), Budget.category == data.category, Budget.month == data.month).first():
-        raise HTTPException(400, "Budget already exists for this category and month")
+        raise HTTPException(409, "Budget already exists for this category and month")
     item = Budget(user_id=uid(user), category=data.category, amount=data.amount, month=data.month)
     db.add(item); db.commit(); db.refresh(item); return item
 
 @app.get("/budgets", response_model=list[BudgetResponse])
 def get_budgets(month: str | None = None, db: Session = Depends(get_db), user=Depends(current_user)):
+    if month: month = validate_month_format(month)
     q = db.query(Budget).filter(Budget.user_id == uid(user))
     if month: q = q.filter(Budget.month == month)
-    return q.all()
+    return q.order_by(Budget.month.desc(), Budget.category.asc()).all()
 
 @app.put("/budgets/{budget_id}", response_model=BudgetResponse)
 def update_budget(budget_id: int, data: BudgetUpdate, db: Session = Depends(get_db), user=Depends(current_user)):
     item = db.query(Budget).filter(Budget.id == budget_id, Budget.user_id == uid(user)).first()
     if not item: raise HTTPException(404, "Budget not found")
+    duplicate = db.query(Budget).filter(Budget.user_id == uid(user), Budget.category == data.category, Budget.month == data.month, Budget.id != budget_id).first()
+    if duplicate: raise HTTPException(409, "Budget already exists for this category and month")
     item.category = data.category; item.amount = data.amount; item.month = data.month
     db.commit(); db.refresh(item); return item
 
@@ -128,16 +142,20 @@ def dashboard_budgets(month: str = Depends(validate_month_query), db: Session = 
 @app.get("/transactions/summary")
 def transaction_summary(from_date: str | None = None, to_date: str | None = None, db: Session = Depends(get_db), user=Depends(current_user)):
     q = db.query(Transaction).filter(Transaction.user_id == uid(user))
-    if from_date: q = q.filter(Transaction.created_at >= datetime.strptime(from_date, "%Y-%m-%d"))
-    if to_date: q = q.filter(Transaction.created_at <= datetime.strptime(to_date, "%Y-%m-%d").replace(hour=23, minute=59, second=59))
+    if from_date:
+        s = parse_date_filter(from_date, "from_date"); q = q.filter(Transaction.created_at >= s)
+    if to_date:
+        e = parse_date_filter(to_date, "to_date"); q = q.filter(Transaction.created_at <= e.replace(hour=23, minute=59, second=59))
     ts = q.all(); i = sum(t.amount for t in ts if t.type == "income"); e = sum(t.amount for t in ts if t.type == "expense")
     return {"total_income": i, "total_expense": e, "balance": i - e, "transaction_count": len(ts)}
 
 @app.get("/transactions/expenses-by-category")
 def expenses_by_category(from_date: str | None = None, to_date: str | None = None, db: Session = Depends(get_db), user=Depends(current_user)):
     q = db.query(Transaction).filter(Transaction.user_id == uid(user), Transaction.type == "expense")
-    if from_date: q = q.filter(Transaction.created_at >= datetime.strptime(from_date, "%Y-%m-%d"))
-    if to_date: q = q.filter(Transaction.created_at <= datetime.strptime(to_date, "%Y-%m-%d").replace(hour=23, minute=59, second=59))
+    if from_date:
+        s = parse_date_filter(from_date, "from_date"); q = q.filter(Transaction.created_at >= s)
+    if to_date:
+        e = parse_date_filter(to_date, "to_date"); q = q.filter(Transaction.created_at <= e.replace(hour=23, minute=59, second=59))
     out = {}
     for t in q.all(): out[t.category] = out.get(t.category, 0) + t.amount
     return out
