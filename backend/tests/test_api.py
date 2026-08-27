@@ -4,7 +4,7 @@ from datetime import datetime
 def test_root_endpoint(client):
     response = client.get("/")
     assert response.status_code == 200
-    assert response.json()["message"] == "FinPlan API is running"
+    assert response.headers["content-type"].startswith("text/html")
 
 
 def test_dashboard_rejects_invalid_month(client):
