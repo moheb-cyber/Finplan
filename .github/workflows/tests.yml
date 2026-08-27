@@ -9,6 +9,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      FINPLAN_AUTH_SECRET: ci-test-secret
+      FINPLAN_TOKEN_TTL_HOURS: 24
 
     steps:
       - name: Checkout
