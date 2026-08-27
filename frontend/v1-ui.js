@@ -1,10 +1,22 @@
 /* FinPlan v1 — final UI interactions */
 (() => {
-    const API_BASE = window.FINPLAN_API_BASE || "http://127.0.0.1:8000";
+    const API_BASE = window.FINPLAN_API_BASE || "";
     const $ = (selector, root = document) => root.querySelector(selector);
     const lang = () => document.documentElement.lang === "fa" ? "fa" : "en";
     const fa = () => lang() === "fa";
-    const api = async (path, options = {}) => { const response = await fetch(`${API_BASE}${path}`, { ...options, headers: { "Content-Type": "application/json", ...(options.headers || {}) } }); if (!response.ok) throw new Error(`API ${response.status}`); return response.json(); };
+    const token = () => localStorage.getItem("finplan-token");
+    const api = async (path, options = {}) => {
+        const headers = new Headers(options.headers || {});
+        if (!headers.has("Content-Type") && options.body) headers.set("Content-Type", "application/json");
+        if (token()) headers.set("Authorization", `Bearer ${token()}`);
+        const response = await fetch(`${API_BASE}${path}`, { ...options, headers });
+        if (response.status === 401) {
+            window.dispatchEvent(new CustomEvent("finplan:auth-required"));
+            throw new Error("Unauthorized");
+        }
+        if (!response.ok) throw new Error(`API ${response.status}`);
+        return response.json();
+    };
     const toast = message => { const el = $("#toast"); if (!el) return; el.textContent = message; el.classList.add("show"); clearTimeout(toast.timer); toast.timer = setTimeout(() => el.classList.remove("show"), 2600); };
 
     function addTransactionModal() {
@@ -17,11 +29,12 @@
     function closeTransactionModal() { $("#transactionModal")?.setAttribute("hidden", "true"); }
     async function submitTransaction(event) {
         event.preventDefault();
+        if (!token()) { window.dispatchEvent(new CustomEvent("finplan:auth-required")); return; }
         const data = new FormData(event.currentTarget);
         const payload = { title: String(data.get("title") || "").trim(), amount: Math.round(Number(data.get("amount"))), type: data.get("type"), category: String(data.get("category") || "").trim() };
         if (!payload.title || !payload.category || !Number.isFinite(payload.amount) || payload.amount <= 0) return;
         try { await api("/transactions", { method: "POST", body: JSON.stringify(payload) }); closeTransactionModal(); event.currentTarget.reset(); toast(fa() ? "تراکنش با موفقیت اضافه شد." : "Transaction added successfully."); window.dispatchEvent(new CustomEvent("finplan:dashboard-refresh")); window.dispatchEvent(new CustomEvent("finplan:transactions-refresh")); if (typeof window.refreshDashboard === "function") await window.refreshDashboard(); }
-        catch (error) { console.error(error); toast(fa() ? "افزودن تراکنش ناموفق بود." : "Could not add transaction."); }
+        catch (error) { if (error.message !== "Unauthorized") console.error(error); toast(fa() ? "افزودن تراکنش ناموفق بود." : "Could not add transaction."); }
     }
     function settingsWorkspace() {
         const root = $("#transactionsWorkspace"); if (!root) return;
@@ -34,7 +47,7 @@
         $("#resetPreferences")?.addEventListener("click", () => { localStorage.removeItem("finplan-theme"); applyTheme("dark"); toast(fa() ? "تنظیمات بازنشانی شد." : "Preferences reset."); });
     }
     function applyTheme(theme) { const value = theme === "light" ? "light" : "dark"; localStorage.setItem("finplan-theme", value); document.documentElement.dataset.theme = value; settingsWorkspace(); }
-    function profileFix() { const profile = $(".profile"); if (!profile) return; profile.innerHTML = `<div class="avatar" aria-hidden="true">M</div><div class="profile-info"><strong>Moheb</strong><span data-i18n="personalAccount">Personal account</span></div>`; profile.classList.add("profile-fixed"); }
+    function profileFix() { const profile = $(".profile"); if (!profile) return; profile.innerHTML = `<div class="profile-info"><strong>Moheb</strong><span data-i18n="personalAccount">Personal account</span></div>`; profile.classList.add("profile-fixed"); }
     function replaceHandler(selector, handler) { const old = $(selector); if (!old) return; const fresh = old.cloneNode(true); old.replaceWith(fresh); fresh.addEventListener("click", handler); return fresh; }
     function wire() {
         addTransactionModal();
